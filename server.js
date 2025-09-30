@@ -1,6 +1,8 @@
 import express from "express";
 import dotenv from "dotenv";
 import userRoutes from "./routes/userRoutes.js";
+import categoryRoutes from "./routes/categoryRoutes.js";
+import subCategoryRoutes from "./routes/subCategoryRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -8,7 +10,9 @@ const app = express();
 app.use(express.json());
 
 // Routes
-app.use("/api/users", userRoutes);
+app.use("/users", userRoutes);
+app.use("/categories", categoryRoutes);
+app.use("/subcategories", subCategoryRoutes);
 
 app.get("/", (req, res) => {
     res.send("Media Store Server is online 🚀");

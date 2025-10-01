@@ -4,6 +4,7 @@ import userRoutes from "./routes/userRoutes.js";
 import categoryRoutes from "./routes/categoryRoutes.js";
 import subCategoryRoutes from "./routes/subCategoryRoutes.js";
 import postRoutes from "./routes/postRoutes.js";
+import reviewRoutes from "./routes/reviewRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -15,6 +16,7 @@ app.use("/users", userRoutes);
 app.use("/categories", categoryRoutes);
 app.use("/subcategories", subCategoryRoutes);
 app.use("/posts", postRoutes);
+app.use("/reviews", reviewRoutes);
 
 
 app.get("/", (req, res) => {

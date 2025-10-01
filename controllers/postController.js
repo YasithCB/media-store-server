@@ -13,10 +13,8 @@ export const getPosts = async (req, res) => {
 export const getHighRatedPosts = async (req, res) => {
     try {
         const posts = await postModel.getPostsByRating(3); // pass threshold
-        console.log(posts);
         return success(res, posts);
     } catch (err) {
-        console.log(err);
         return error(res, err.message);
     }
 };

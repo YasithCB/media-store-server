@@ -1,4 +1,5 @@
 import {pool} from "../db.js";
+import { v4 as uuidv4 } from "uuid";
 
 export const DealerPostModel = {
     // Get all dealer posts
@@ -40,7 +41,7 @@ export const DealerPostModel = {
         return rows;
     },
 
-    // Create dealer post
+
     async create(data) {
         const {
             name, logo, photos, description, category_id, subcategory_id,
@@ -51,25 +52,48 @@ export const DealerPostModel = {
             established_year, featured, tags
         } = data;
 
+        // Generate dealer_id
+        const dealer_id = uuidv4().replace(/-/g, "").substring(0, 20); // max 20 chars
+
         const [result] = await pool.execute(
-            `INSERT INTO dealer_post 
-            (name, logo, photos, description, category_id, subcategory_id,
-             email, phone, whatsapp, website_url, social_links,
-             address_line1, address_line2, city, country, location_map,
-             services, services_starting_from, working_hours,
-             rating, reviews_count, verified, established_year, featured, tags)
-             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, ?,?)`,
+            `INSERT INTO dealer_post
+         (dealer_id, name, logo, photos, description, category_id, subcategory_id,
+          email, phone, whatsapp, website_url, social_links,
+          address_line1, address_line2, city, country, location_map,
+          services, services_starting_from, working_hours,
+          rating, reviews_count, verified, established_year, featured, tags)
+         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, ?,?, ?)`,
             [
-                name, logo, photos, description, category_id, subcategory_id,
-                email, phone, whatsapp, website_url, social_links,
-                address_line1, address_line2, city, country, location_map,
-                services, services_starting_from, working_hours,
-                rating || 0, reviews_count || 0, verified || 0,
-                established_year, featured || 0, tags
+                dealer_id,
+                name || null,
+                logo || null,
+                photos || null,
+                description || null,
+                category_id || null,
+                subcategory_id || null,
+                email || null,
+                phone || null,
+                whatsapp || null,
+                website_url || null,
+                social_links || null,
+                address_line1 || null,
+                address_line2 || null,
+                city || null,
+                country || null,
+                location_map || null,
+                services || null,
+                services_starting_from || null,
+                working_hours || null,
+                rating ?? 0,
+                reviews_count ?? 0,
+                verified ?? 0,
+                established_year || null,
+                featured ?? 0,
+                tags || null
             ]
         );
 
-        return { dealer_id: result.insertId, ...data };
+        return { dealer_id, ...data };
     },
 
     // Update dealer post
@@ -95,5 +119,5 @@ export const DealerPostModel = {
             [id]
         );
         return result.affectedRows;
-    }
+    },
 };

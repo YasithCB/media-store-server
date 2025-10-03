@@ -1,35 +1,85 @@
 import {pool} from "../db.js";
 
-export const getAllUsers = async () => {
-    const [rows] = await pool.query("SELECT user_id, name, email, phone, role, profile_picture, created_at FROM users");
-    return rows;
-};
+export const UserModel = {
+    async create(user) {
+        const { name, email, password, phone, profile_picture } = user;
+        const [result] = await pool.execute(
+            `INSERT INTO user (name, email, password, phone, profile_picture) VALUES (?, ?, ?, ?, ?)`,
+            [name, email, password, phone, profile_picture]
+        );
+        return { user_id: result.insertId, ...user };
+    },
 
-export const getUserById = async (id) => {
-    const [rows] = await pool.query(
-        "SELECT user_id, name, email, phone, role, profile_picture, created_at FROM users WHERE user_id = ?",
-        [id]
-    );
-    return rows[0];
-};
+    async findByEmail(email) {
+        const [rows] = await pool.execute(
+            `SELECT * FROM user WHERE email = ?`,
+            [email]
+        );
+        return rows[0];
+    },
 
-export const createUser = async ({ name, email, password, phone, role, profile_picture }) => {
-    const [result] = await pool.query(
-        "INSERT INTO users (name, email, password, phone, role, profile_picture) VALUES (?, ?, ?, ?, ?, ?)",
-        [name, email, password, phone, role, profile_picture]
-    );
-    return { user_id: result.insertId, name, email, phone, role, profile_picture };
-};
+    async findById(user_id) {
+        const [rows] = await pool.execute(
+            `SELECT user_id, name, email, phone, profile_picture, created_at, updated_at
+             FROM user WHERE user_id = ?`,
+            [user_id]
+        );
+        return rows[0];
+    },
 
-export const updateUser = async (id, { name, email, phone, role, profile_picture }) => {
-    await pool.query(
-        "UPDATE users SET name=?, email=?, phone=?, role=?, profile_picture=?, updated_at=NOW() WHERE user_id=?",
-        [name, email, phone, role, profile_picture, id]
-    );
-    return getUserById(id);
-};
+    async update(user_id, data) {
+        const fields = Object.keys(data)
+            .map((key) => `${key} = ?`)
+            .join(", ");
+        const values = Object.values(data);
 
-export const deleteUser = async (id) => {
-    await pool.query("DELETE FROM users WHERE user_id = ?", [id]);
-    return { message: "User deleted successfully" };
+        const [result] = await pool.execute(
+            `UPDATE user SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`,
+            [...values, user_id]
+        );
+        return result.affectedRows;
+    },
+
+    // reset password related
+    async saveResetOTP(userId, otp) {
+        const expires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+        await pool.execute(
+            "UPDATE user SET reset_otp = ?, otp_expires_at = ? WHERE user_id = ?",
+            [otp, expires, userId]
+        );
+    },
+
+
+    async verifyResetOTP(userId, otp) {
+        const [rows] = await pool.execute(
+            "SELECT * FROM user WHERE user_id = ? AND reset_otp = ? AND otp_expires_at > NOW()",
+            [userId, otp]
+        );
+        console.log(rows)
+        return rows.length > 0;
+    },
+
+    async saveResetToken(userId, token) {
+        await pool.execute(
+            "UPDATE user SET reset_token = ?, reset_otp = NULL, otp_expires_at = NULL WHERE user_id = ?",
+            [token, userId]
+        );
+    },
+
+    async findByResetToken(token) {
+        const [rows] = await pool.execute(
+            "SELECT * FROM user WHERE reset_token = ?",
+            [token]
+        );
+        return rows[0];
+    },
+
+    async updatePassword(userId, hashedPassword) {
+        await pool.execute(
+            "UPDATE user SET password = ?, reset_token = NULL WHERE user_id = ?",
+            [hashedPassword, userId]
+        );
+    }
+
+
 };

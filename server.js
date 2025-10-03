@@ -8,11 +8,19 @@ import reviewRoutes from "./routes/reviewRoutes.js";
 import equipmentPostRoutes from "./routes/equipmentPostRoutes.js";
 import jobPostRoutes from "./routes/jobPostRoutes.js";
 import dealerPostRoutes from "./routes/dealerPostRoutes.js";
+import authRoutes from "./routes/authRoutes.js";
 
 dotenv.config();
 const app = express();
 
+// Then JSON parsing for other routes
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Serve uploads
+app.use("/uploads", express.static("uploads"));
+// Place /auth routes BEFORE express.json()
+app.use("/auth", authRoutes);
 
 // Routes
 app.use("/users", userRoutes);

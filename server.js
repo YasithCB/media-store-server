@@ -19,7 +19,6 @@ app.use(express.urlencoded({ extended: true }));
 
 // Serve uploads
 app.use("/uploads", express.static("uploads"));
-// Place /auth routes BEFORE express.json()
 app.use("/auth", authRoutes);
 
 // Routes

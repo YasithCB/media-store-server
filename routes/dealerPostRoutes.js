@@ -16,8 +16,6 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req, file, cb) => {
-    console.log("Received file type:", file.mimetype); // ✅ debug MIME type
-
     const allowedTypes = [
         "image/jpeg",
         "image/png",
@@ -34,11 +32,8 @@ const fileFilter = (req, file, cb) => {
     }
 };
 
-
-
 const upload = multer({ storage, fileFilter });
 
-// ✅ Remove old route and replace with multer-enabled route
 router.post(
     "/",
     upload.fields([

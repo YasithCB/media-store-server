@@ -1,4 +1,5 @@
 import { pool } from "../db.js";
+import { v4 as uuidv4 } from "uuid";
 
 // Get all equipment posts
 export const getAllEquipmentPosts = async () => {
@@ -42,54 +43,56 @@ export const getEquipmentPostsBySubcategoryId = async (subcategoryId) => {
 };
 
 
-// Create new equipment post
-export const createEquipmentPost = async ({
-                                              title,
-                                              contact,
-                                              price,
-                                              description,
-                                              brand,
-                                              model,
-                                              usage,
-                                              item_condition,
-                                              address_line1,
-                                              address_line2,
-                                              country,
-                                              city,
-                                              category_id,
-                                              subcategory_id,
-                                              location,
-                                              photos,
-                                          }) => {
-    await pool.execute(
+// CREATE
+export const createEquipmentPost = async (data) => {
+    const {
+        title,
+        contact,
+        price,
+        description,
+        brand,
+        model,
+        usage,
+        item_condition,
+        address_line1,
+        address_line2,
+        country,
+        city,
+        category_id,
+        subcategory_id,
+        location,
+        photos,
+    } = data;
+
+    const post_id = uuidv4().replace(/-/g, "").substring(0, 20); // max 20 chars
+
+    const [result] = await pool.execute(
         `INSERT INTO equipment_post
-         (title, contact, price, description, brand, model, \`usage\`, item_condition,
+         (post_id, title, contact, price, description, brand, model, \`usage\`, item_condition,
           address_line1, address_line2, country, city, category_id, subcategory_id, location, photos)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
+            post_id,
             title,
             contact,
-            price,
-            description,
-            brand,
-            model,
-            usage,
-            item_condition,
-            address_line1,
-            address_line2,
-            country,
-            city,
+            price || null,
+            description || null,
+            brand || null,
+            model || null,
+            usage || null,
+            item_condition || null,
+            address_line1 || null,
+            address_line2 || null,
+            country || null,
+            city || null,
             category_id,
             subcategory_id,
-            location,
-            JSON.stringify(photos),
+            location || null,
+            photos || null,
         ]
     );
 
-    const [rows] = await pool.execute(
-        "SELECT * FROM equipment_post ORDER BY created_at DESC LIMIT 1"
-    );
-    return rows[0];
+    return { post_id, ...data };
 };
 
 // Update existing equipment post

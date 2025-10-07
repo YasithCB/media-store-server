@@ -37,24 +37,64 @@ export const getJobPostById = async (postId) => {
     return rows[0];
 };
 
+export const generateJobPostId = async () => {
+    const query = `
+        SELECT post_id
+        FROM job_post
+        ORDER BY CAST(SUBSTRING(post_id, 3) AS UNSIGNED) DESC
+        LIMIT 1
+    `;
+    const [rows] = await pool.execute(query);
+
+    if (rows.length === 0) {
+        return "JP0001";
+    }
+
+    const lastId = rows[0].post_id; // e.g. "JP0023"
+    const numPart = parseInt(lastId.replace("JP", ""), 10) + 1;
+    return `JP${numPart.toString().padStart(4, "0")}`; // e.g. "JP0024"
+};
+
+
 // Create job post
 export const createJobPost = async (postData) => {
+    // Generate custom ID
+    postData.post_id = await generateJobPostId();
+
     const query = `
         INSERT INTO job_post (
             post_id, title, company_name, logo, location, country, job_type, industry,
             experience_level, salary, salary_type, description, posted_date, expiry_date,
             email, phone, application_url, remote, tags, category_id, subcategory_id,
-            are_you_hiring
+            is_hiring
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
+
     const params = [
-        postData.post_id, postData.title, postData.company_name, postData.logo, postData.location,
-        postData.country, postData.job_type, postData.industry, postData.experience_level,
-        postData.salary, postData.salary_type, postData.description, postData.posted_date,
-        postData.expiry_date, postData.email, postData.phone, postData.application_url,
-        postData.remote, JSON.stringify(postData.tags), postData.category_id,
-        postData.subcategory_id, postData.are_you_hiring
+        postData.post_id,
+        postData.title ?? null,
+        postData.company_name ?? null,
+        postData.logo ?? null,
+        postData.location ?? null,
+        postData.country ?? null,
+        postData.job_type ?? null,
+        postData.industry ?? null,
+        postData.experience_level ?? null,
+        postData.salary ?? null,
+        postData.salary_type ?? null,
+        postData.description ?? null,
+        postData.posted_date ?? new Date(),
+        postData.expiry_date ?? null,
+        postData.email ?? null,
+        postData.phone ?? null,
+        postData.application_url ?? null,
+        postData.remote != null ? postData.remote : 0,
+        JSON.stringify(postData.tags || []),
+        postData.category_id ?? null,
+        postData.subcategory_id ?? null,
+        postData.is_hiring != null ? postData.is_hiring : 1
     ];
+
     const [result] = await pool.execute(query, params);
     return result;
 };
@@ -66,7 +106,7 @@ export const updateJobPost = async (postId, postData) => {
             title = ?, company_name = ?, logo = ?, location = ?, country = ?, job_type = ?, industry = ?,
             experience_level = ?, salary = ?, salary_type = ?, description = ?, posted_date = ?, expiry_date = ?,
             email = ?, phone = ?, application_url = ?, remote = ?, tags = ?, category_id = ?, subcategory_id = ?,
-            are_you_hiring = ?
+            is_hiring = ?
         WHERE post_id = ?
     `;
     const params = [
@@ -74,7 +114,7 @@ export const updateJobPost = async (postId, postData) => {
         postData.job_type, postData.industry, postData.experience_level, postData.salary, postData.salary_type,
         postData.description, postData.posted_date, postData.expiry_date, postData.email, postData.phone,
         postData.application_url, postData.remote, JSON.stringify(postData.tags), postData.category_id,
-        postData.subcategory_id, postData.are_you_hiring, postId
+        postData.subcategory_id, postData.is_hiring, postId
     ];
     const [result] = await pool.execute(query, params);
     return result;

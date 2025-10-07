@@ -43,26 +43,49 @@ export const DealerPostModel = {
 
 
     async create(data) {
+        console.log("=== DealerPostModel.create data ===", data);
+
         const {
-            name, logo, photos, description, category_id, subcategory_id,
-            email, phone, whatsapp, website_url, social_links,
-            address_line1, address_line2, city, country, location_map,
-            services, services_starting_from, working_hours,
-            rating, reviews_count, verified,
-            established_year, featured, tags
+            name,
+            logo,
+            photos,
+            description,
+            category_id,
+            subcategory_id,
+            email,
+            phone,
+            whatsapp,
+            website_url,
+            social_links,
+            address_line1,
+            address_line2,
+            city,
+            country,
+            location_map,
+            services,
+            services_starting_from,
+            working_hours,
+            rating,
+            reviews_count,
+            verified,
+            established_year,
+            featured,
+            tags
         } = data;
 
-        // Generate dealer_id
-        const dealer_id = uuidv4().replace(/-/g, "").substring(0, 20); // max 20 chars
+        // Generate dealer_id (20 chars)
+        const dealer_id = uuidv4().replace(/-/g, "").substring(0, 20);
+
+        console.log("=== Generated dealer_id ===", dealer_id);
 
         const [result] = await pool.execute(
             `INSERT INTO dealer_post
-         (dealer_id, name, logo, photos, description, category_id, subcategory_id,
-          email, phone, whatsapp, website_url, social_links,
-          address_line1, address_line2, city, country, location_map,
-          services, services_starting_from, working_hours,
-          rating, reviews_count, verified, established_year, featured, tags)
-         VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, ?,?, ?)`,
+             (dealer_id, name, logo, photos, description, category_id, subcategory_id,
+              email, phone, whatsapp, website_url, social_links,
+              address_line1, address_line2, city, country, location_map,
+              services, services_starting_from, working_hours,
+              rating, reviews_count, verified, established_year, featured, tags)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 dealer_id,
                 name || null,
@@ -93,7 +116,10 @@ export const DealerPostModel = {
             ]
         );
 
-        return { dealer_id, ...data };
+
+        console.log("=== Dealer post created result ===", result);
+
+        return { dealer_id, insertedId: result.insertId, ...data };
     },
 
     // Update dealer post

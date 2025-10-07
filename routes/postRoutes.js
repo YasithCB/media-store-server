@@ -1,15 +1,14 @@
 import express from "express";
 import {
-    getPosts,
     getPostsBySubcategory,
     addPost,
     editPost,
-    removePost, getPostsByCategory, getPostById, getHighRatedPosts,
+    removePost, getPostsByCategory, getPostById, getHighRatedPosts, getAllPosts,
 } from "../controllers/postController.js";
 
 const router = express.Router();
 
-router.get("/", getPosts);
+router.get("/", getAllPosts);
 router.get("/topRated", getHighRatedPosts);
 router.get("/:id", getPostById);
 router.get("/category/:categoryId", getPostsByCategory);

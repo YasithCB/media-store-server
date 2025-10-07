@@ -40,23 +40,14 @@ export const getPostsBySubcategoryId = async (req, res) => {
 // Create new equipment post
 export const createEquipmentPost = async (req, res) => {
     try {
-        const photosPaths = req.files?.photos
-            ? req.files.photos.map(f => "/" + f.path.replace(/\\/g, "/"))
-            : null;
-
         const postData = {
             ...req.body,
-            photos: photosPaths ? JSON.stringify(photosPaths) : null,
+            photos: req.files ? req.files.map(f => f.path) : []
         };
 
-        for (const key in postData) {
-            if (postData[key] === undefined) postData[key] = null;
-        }
-
-        const post = await EquipmentPostModel.createEquipmentPost(postData);
-        return success(res, post, "Equipment post created successfully");
+        const result = await EquipmentPostModel.createEquipmentPost(postData);
+        return success(res, result, "Equipment post created successfully", 201);
     } catch (err) {
-        console.error(err);
         return error(res, err.message);
     }
 };

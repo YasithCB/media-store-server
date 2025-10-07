@@ -42,58 +42,61 @@ export const getEquipmentPostsBySubcategoryId = async (subcategoryId) => {
     return rows;
 };
 
+export const generateEquipmentPostId = async () => {
+    const query = `
+        SELECT post_id
+        FROM equipment_post
+        ORDER BY post_id DESC
+        LIMIT 1
+    `;
+    const [rows] = await pool.execute(query);
+
+    if (!rows.length) {
+        return "EP0001";
+    }
+
+    const lastId = rows[0].post_id; // e.g. "EP0023"
+    const numPart = parseInt(lastId.replace("EP", "")) + 1;
+    return "EP" + numPart.toString().padStart(4, "0"); // e.g. "EP0024"
+};
 
 // CREATE
-export const createEquipmentPost = async (data) => {
-    const {
-        title,
-        contact,
-        price,
-        description,
-        brand,
-        model,
-        usage,
-        item_condition,
-        address_line1,
-        address_line2,
-        country,
-        city,
-        category_id,
-        subcategory_id,
-        location,
-        photos,
-    } = data;
+export const createEquipmentPost = async (postData) => {
+    const postId = await generateEquipmentPostId();
 
-    const post_id = uuidv4().replace(/-/g, "").substring(0, 20); // max 20 chars
+    const query = `
+        INSERT INTO equipment_post (
+            post_id, title, contact, price, description, brand, model, \`usage\`, item_condition,
+            address_line1, address_line2, country, city, location,
+            category_id, subcategory_id, photos
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
 
-    const [result] = await pool.execute(
-        `INSERT INTO equipment_post
-         (post_id, title, contact, price, description, brand, model, \`usage\`, item_condition,
-          address_line1, address_line2, country, city, category_id, subcategory_id, location, photos)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-            post_id,
-            title,
-            contact,
-            price || null,
-            description || null,
-            brand || null,
-            model || null,
-            usage || null,
-            item_condition || null,
-            address_line1 || null,
-            address_line2 || null,
-            country || null,
-            city || null,
-            category_id,
-            subcategory_id,
-            location || null,
-            photos || null,
-        ]
-    );
 
-    return { post_id, ...data };
+    const params = [
+        postId,
+        postData.title,
+        postData.contact,
+        postData.price || null,
+        postData.description,
+        postData.brand || null,
+        postData.model || null,
+        postData.usage || null,
+        postData.item_condition || null,
+        postData.address_line1 || null,
+        postData.address_line2 || null,
+        postData.country || null,
+        postData.city || null,
+        postData.location || null,
+        postData.category_id,
+        postData.subcategory_id,
+        JSON.stringify(postData.photos || [])
+    ];
+
+    const [result] = await pool.execute(query, params);
+    return { post_id: postId, insertedId: result.insertId };
 };
+
 
 // Update existing equipment post
 export const updateEquipmentPost = async (postId, fields) => {

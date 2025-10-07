@@ -34,49 +34,75 @@ export const getDealerPostsBySubcategoryId = async (req, res) => {
 
 // Create new dealer post
 export const createDealerPost = async (req, res) => {
+    console.log("=== Request Body ===");
     console.log(req.body);
+
+    console.log("=== Uploaded Files ===");
     console.log(req.files);
 
     try {
-        const logoPath = req.files.logo
+        // Handle logo
+        const logoPath = req.files?.logo
             ? "/" + req.files.logo[0].path.replace(/\\/g, "/")
             : null;
 
-        const photosPaths = req.files.photos
+        // Handle multiple photos
+        const photosPaths = req.files?.photos
             ? req.files.photos.map(file => "/" + file.path.replace(/\\/g, "/"))
-            : null;
+            : [];
 
+        // Prepare post data
         const postData = {
-            ...req.body,
+            dealer_id: req.body.dealer_id ?? null,
+            name: req.body.name ?? null,
             logo: logoPath,
-            photos: photosPaths ? JSON.stringify(photosPaths) : null,
-            services: req.body.services ? JSON.parse(req.body.services) : null,
-            tags: req.body.tags ? JSON.parse(req.body.tags) : null,
-            social_links: req.body.social_links ? JSON.stringify(req.body.social_links) : null,
-            location_map: req.body.location_map ? JSON.stringify(req.body.location_map) : null,
-            working_hours: req.body.working_hours ? JSON.stringify(req.body.working_hours) : null,
+            photos: photosPaths.length ? JSON.stringify(photosPaths) : null,
+            description: req.body.description ?? null,
+            category_id: req.body.category_id ?? null,
+            subcategory_id: req.body.subcategory_id ?? null,
+            email: req.body.email ?? null,
+            phone: req.body.phone ?? null,
+            whatsapp: req.body.whatsapp ?? null,
+            website_url: req.body.website_url ?? null,
+            address_line1: req.body.address_line1 ?? null,
+            address_line2: req.body.address_line2 ?? null,
+            city: req.body.city ?? null,
+            country: req.body.country ?? null,
+            location_map: req.body.location_map ? JSON.stringify(JSON.parse(req.body.location_map)) : null,
+            services: req.body.services ? JSON.stringify(JSON.parse(req.body.services)) : null,
+            services_starting_from: req.body.services_starting_from ?? null,
+            working_hours: req.body.working_hours ? JSON.stringify(JSON.parse(req.body.working_hours)) : null,
             rating: req.body.rating ?? 0,
             reviews_count: req.body.reviews_count ?? 0,
             verified: req.body.verified ?? 0,
+            established_year: req.body.established_year ?? null,
             featured: req.body.featured ?? 0,
+            tags: req.body.tags ? JSON.stringify(JSON.parse(req.body.tags)) : null,
         };
 
-        // Ensure no undefined values
-        for (const key in postData) {
-            if (postData[key] === undefined) {
-                postData[key] = null;
-            }
+        console.log("=== Prepared Post Data ===");
+        console.log(postData);
+
+        // Validate required fields
+        if (!postData.name || !postData.category_id || !postData.subcategory_id) {
+            return res.status(400).json({ error: "Name, category_id, and subcategory_id are required" });
         }
 
         const post = await DealerPostModel.create(postData);
 
-        return success(res, post, "Dealer post created successfully");
+        return res.status(201).json({
+            success: true,
+            message: "Dealer post created successfully",
+            data: post
+        });
     } catch (err) {
-        console.error(err);
-        return error(res, err.message);
+        console.error("=== createDealerPost Error ===", err);
+        return res.status(500).json({
+            success: false,
+            message: err.message,
+        });
     }
 };
-
 
 
 // Update dealer post

@@ -1,20 +1,47 @@
 import { pool } from "../db.js";
 
-// Get all posts
 export const getAllPosts = async () => {
-    const [rows] = await pool.query(
-        `SELECT p.*,
-                u.name AS user_name,
-                sc.name AS subcategory_name,
-                COALESCE(AVG(r.rating), 0) AS avg_rating,
-                COUNT(r.review_id) AS total_reviews
-         FROM posts p
-                  JOIN user u ON p.user_id = u.user_id
-                  JOIN subcategories sc ON p.subcategory_id = sc.subcategory_id
-                  LEFT JOIN reviews r ON p.post_id = r.post_id
-         GROUP BY p.post_id
-         ORDER BY avg_rating DESC, total_reviews DESC`
-    );
+    const [rows] = await pool.execute(`
+        SELECT
+            dealer_id AS id,
+            'dealer' AS type,
+            logo AS logo,
+            JSON_UNQUOTE(JSON_EXTRACT(photos, '$[0]')) AS image,
+            name AS title,
+            description,
+            services_starting_from AS price,
+            NULL AS salary
+        FROM dealer_post
+
+        UNION ALL
+
+        SELECT
+            post_id AS id,
+            'equipment' AS type,
+            NULL AS logo,
+            JSON_UNQUOTE(JSON_EXTRACT(photos, '$[0]')) AS image,
+            title,
+            description,
+            price,
+            NULL AS salary
+        FROM equipment_post
+
+        UNION ALL
+
+        SELECT
+            post_id AS id,
+            'job' AS type,
+            logo AS logo,
+            NULL AS image,
+            title,
+            description,
+            NULL AS price,
+            salary
+        FROM job_post
+
+        ORDER BY id DESC
+    `);
+
     return rows;
 };
 

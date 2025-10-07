@@ -1,7 +1,7 @@
 import * as postModel from "../models/postModels.js";
 import {error, success} from "../helpers/response.js";
 
-export const getPosts = async (req, res) => {
+export const getAllPosts = async (req, res) => {
     try {
         const posts = await postModel.getAllPosts();
         return success(res, posts);

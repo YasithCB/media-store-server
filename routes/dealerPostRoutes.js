@@ -1,39 +1,56 @@
 import express from "express";
 import multer from "multer";
-import * as DealerPostController from "../controllers/dealerPostController.js";
 import path from "path";
+import * as DealerPostController from "../controllers/dealerPostController.js";
 
 const router = express.Router();
 
-// Multer setup
+// ------------------------
+// Multer Storage Config
+// ------------------------
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
         cb(null, "uploads/dealer-posts");
     },
     filename: (req, file, cb) => {
-        cb(null, Date.now() + path.extname(file.originalname));
+        const timestamp = Date.now();
+        const ext = path.extname(file.originalname);
+        cb(null, `${timestamp}-${file.fieldname}${ext}`);
     },
 });
 
+// ------------------------
+// File Filter
+// ------------------------
 const fileFilter = (req, file, cb) => {
-    const allowedTypes = [
-        "image/jpeg",
-        "image/png",
-        "image/jpg",
-        "image/webp",   // added for more formats
-        "image/heic",   // iOS default format
-    ];
+    const allowedExtensions = [".jpeg", ".png", ".jpg", ".webp", ".heic"];
+    const ext = path.extname(file.originalname).toLowerCase();
 
-    if (allowedTypes.includes(file.mimetype)) {
+    if (allowedExtensions.includes(ext)) {
         cb(null, true);
     } else {
-        console.error("Rejected file type:", file.mimetype);
+        console.error("Rejected file extension:", ext);
         cb(new Error("Only image files are allowed"), false);
     }
 };
 
-const upload = multer({ storage, fileFilter });
 
+// ------------------------
+// Multer Upload Middleware
+// ------------------------
+const upload = multer({
+    storage,
+    fileFilter,
+    limits: {
+        fileSize: 5 * 1024 * 1024, // 5 MB max per file
+    },
+});
+
+// ------------------------
+// Routes
+// ------------------------
+
+// Create Dealer Post
 router.post(
     "/",
     upload.fields([
@@ -43,10 +60,26 @@ router.post(
     DealerPostController.createDealerPost
 );
 
+// Get all dealer posts
 router.get("/", DealerPostController.getAllDealerPosts);
+
+// Get dealer post by ID
 router.get("/:id", DealerPostController.getDealerPostById);
+
+// Get dealer posts by subcategory
 router.get("/subcategory/:subcategoryId", DealerPostController.getDealerPostsBySubcategoryId);
-router.put("/:id", DealerPostController.updateDealerPost);
+
+// Update dealer post
+router.put(
+    "/:id",
+    upload.fields([
+        { name: "logo", maxCount: 1 },
+        { name: "photos", maxCount: 10 },
+    ]),
+    DealerPostController.updateDealerPost
+);
+
+// Delete dealer post
 router.delete("/:id", DealerPostController.deleteDealerPost);
 
 export default router;

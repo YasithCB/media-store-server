@@ -33,13 +33,29 @@ export const getJobPostById = async (req, res) => {
 
 export const createJobPost = async (req, res) => {
     try {
-        const postData = req.body;
+        console.log("REQ FILE:", req.file);
+        console.log("REQ BODY:", req.body);
+
+        const postData = {
+            ...req.body,
+            logo: req.file ? req.file.path : null,
+            expiry_date: req.body.expiry_date && req.body.expiry_date.trim() !== ""
+                ? req.body.expiry_date
+                : null
+        };
+
+        console.log("FINAL POST DATA:", postData);
+
         const result = await JobPostModel.createJobPost(postData);
         return success(res, result, "Job post created successfully", 201);
     } catch (err) {
+        console.error(err);
         return error(res, err.message);
     }
 };
+
+
+
 
 export const updateJobPost = async (req, res) => {
     try {

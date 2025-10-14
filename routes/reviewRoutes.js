@@ -19,7 +19,7 @@ router.put("/:id", updateReview);        // UPDATE review
 router.delete("/:id", deleteReview);     // DELETE review
 
 // Related to posts
-router.get("/post/:post_id", getReviewsByPost);              // GET all reviews for a post
-router.get("/post/:post_id/average", getAverageRating);      // GET avg rating + total reviews for a post
+router.get("/post/:id", getReviewsByPost);              // GET all reviews for a post
+router.get("/post/:id/average", getAverageRating);      // GET avg rating + total reviews for a post
 
 export default router;

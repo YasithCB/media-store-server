@@ -2,6 +2,7 @@ import express from "express";
 import multer from "multer";
 import path from "path";
 import * as DealerPostController from "../controllers/dealerPostController.js";
+import * as EquipmentPostController from "../controllers/equipmentPostController.js";
 
 const router = express.Router();
 
@@ -62,9 +63,11 @@ router.post(
 
 // Get all dealer posts
 router.get("/", DealerPostController.getAllDealerPosts);
+router.get("/top-rated", DealerPostController.getDealersTopRated);
 
 // Get dealer post by ID
 router.get("/:id", DealerPostController.getDealerPostById);
+router.get("/name/:name", DealerPostController.getDealersByName);
 
 // Get dealer posts by subcategory
 router.get("/subcategory/:subcategoryId", DealerPostController.getDealerPostsBySubcategoryId);

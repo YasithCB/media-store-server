@@ -5,7 +5,7 @@ export const getAllSubCategories = async () => {
     const [rows] = await pool.query(
         `SELECT sc.*, c.name AS category_name, c.image AS category_image
          FROM subcategories sc
-         JOIN categories c ON sc.category_id = c.category_id`
+         JOIN categories c ON sc.category_id = c.id`
     );
     return rows;
 };
@@ -14,7 +14,7 @@ export const getSubCategoriesByCategoryId = async (categoryId) => {
     const [rows] = await pool.query(
         `SELECT sc.*, c.name AS category_name, c.image AS category_image
          FROM subcategories sc
-         JOIN categories c ON sc.category_id = c.category_id
+         JOIN categories c ON sc.category_id = c.id
          WHERE sc.category_id = ?`,
         [categoryId]
     );
@@ -27,8 +27,8 @@ export const getSubCategoryById = async (id) => {
     const [rows] = await pool.query(
         `SELECT sc.*, c.name AS category_name, c.image AS category_image
          FROM subcategories sc
-         JOIN categories c ON sc.category_id = c.category_id
-         WHERE sc.subcategory_id = ?`,
+         JOIN categories c ON sc.category_id = c.id
+         WHERE sc.id = ?`,
         [id]
     );
     return rows[0];
@@ -49,7 +49,7 @@ export const updateSubCategory = async (id, { category_id, name, description, im
     const [result] = await pool.query(
         `UPDATE subcategories 
          SET category_id = ?, name = ?, description = ?, image = ?, updated_at = NOW()
-         WHERE subcategory_id = ?`,
+         WHERE id = ?`,
         [category_id, name, description, image, id]
     );
     return result.affectedRows;
@@ -58,7 +58,7 @@ export const updateSubCategory = async (id, { category_id, name, description, im
 // ✅ Delete subcategory
 export const deleteSubCategory = async (id) => {
     const [result] = await pool.query(
-        `DELETE FROM subcategories WHERE subcategory_id = ?`,
+        `DELETE FROM subcategories WHERE id = ?`,
         [id]
     );
     return result.affectedRows;

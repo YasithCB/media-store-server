@@ -32,8 +32,14 @@ router.post(
 );
 
 router.get("/", EquipmentPostController.getAllEquipmentPosts);
+router.get("/on-sale", EquipmentPostController.getEquipmentsOnSale);
+router.get("/top-rated", EquipmentPostController.getEquipmentsTopRated);
+router.get("/used", EquipmentPostController.getUsedEquipments);
+router.get("/brand-new", EquipmentPostController.getBrandNewEquipments);
+router.get("/rent", EquipmentPostController.getRentEquipments);
 router.get("/subcategory/:subcategoryId", EquipmentPostController.getPostsBySubcategoryId);
 router.get("/:id", EquipmentPostController.getPostById);
+router.get("/name/:name", EquipmentPostController.getEquipmentsByName);
 router.put("/:id", EquipmentPostController.updatePost);
 router.delete("/:id", EquipmentPostController.deletePost);
 

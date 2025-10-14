@@ -1,11 +1,30 @@
 import { DealerPostModel } from "../models/dealerPostModel.js";
 import {error, success} from "../helpers/response.js";
+import * as EquipmentPostModel from "../models/equipmentPostModel.js";
 
 // Get all dealer posts
 export const getAllDealerPosts = async (req, res) => {
     try {
         const posts = await DealerPostModel.getAll();
         return success(res, posts, "Dealer posts fetched successfully");
+    } catch (err) {
+        return error(res, err.message);
+    }
+};
+
+export const getDealersTopRated = async (req, res) => {
+    try {
+        const posts = await DealerPostModel.getTopRated(); // pass threshold
+        return success(res, posts);
+    } catch (err) {
+        return error(res, err.message);
+    }
+};
+
+export const getDealersByName = async (req, res) => {
+    try {
+        const posts = await DealerPostModel.getByName(req.params.name); // pass threshold
+        return success(res, posts);
     } catch (err) {
         return error(res, err.message);
     }

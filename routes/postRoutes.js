@@ -3,7 +3,7 @@ import {
     getPostsBySubcategory,
     addPost,
     editPost,
-    removePost, getPostsByCategory, getPostById, getHighRatedPosts, getAllPosts,
+    removePost, getPostsByCategory, getPostById, getHighRatedPosts, getAllPosts
 } from "../controllers/postController.js";
 
 const router = express.Router();

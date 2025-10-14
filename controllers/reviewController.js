@@ -24,7 +24,7 @@ export const getReviewById = async (req, res) => {
 
 export const getReviewsByPost = async (req, res) => {
     try {
-        const reviews = await ReviewModel.getReviewsByPost(req.params.post_id);
+        const reviews = await ReviewModel.getReviewsByPost(req.params.id);
         return success(res, reviews, "Reviews for post fetched successfully");
     } catch (err) {
         return error(res, err.message);
@@ -33,11 +33,11 @@ export const getReviewsByPost = async (req, res) => {
 
 export const createReview = async (req, res) => {
     try {
-        const { post_id, rating, comment } = req.body;
-        if (!post_id || !rating) {
-            return error(res, "post_id and rating are required", 400);
+        const { id, rating, comment } = req.body;
+        if (!id || !rating) {
+            return error(res, "id and rating are required", 400);
         }
-        const review = await ReviewModel.createReview(post_id, rating, comment || null);
+        const review = await ReviewModel.createReview(id, rating, comment || null);
         return success(res, review, "Review created successfully");
     } catch (err) {
         return error(res, err.message);
@@ -71,7 +71,7 @@ export const deleteReview = async (req, res) => {
 
 export const getAverageRating = async (req, res) => {
     try {
-        const result = await ReviewModel.getAverageRating(req.params.post_id);
+        const result = await ReviewModel.getAverageRating(req.params.id);
         return success(res, result || { avg_rating: null, total_reviews: 0 }, "Average rating fetched successfully");
     } catch (err) {
         return error(res, err.message);

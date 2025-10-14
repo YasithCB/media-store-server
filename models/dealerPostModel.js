@@ -7,9 +7,17 @@ export const DealerPostModel = {
         const [rows] = await pool.execute(
             `SELECT dp.*, c.name AS category_name, sc.name AS subcategory_name
              FROM dealer_post dp
-             JOIN categories c ON dp.category_id = c.category_id
-             JOIN subcategories sc ON dp.subcategory_id = sc.subcategory_id
+             JOIN categories c ON dp.category_id = c.id
+             JOIN subcategories sc ON dp.subcategory_id = sc.id
              ORDER BY dp.created_at DESC`
+        );
+        return rows;
+    },
+
+    async getTopRated (minRating = 4)  {
+        const [rows] = await pool.query(
+            "SELECT * FROM dealer_post WHERE rating >= ? ORDER BY rating DESC",
+            [minRating]
         );
         return rows;
     },
@@ -19,12 +27,23 @@ export const DealerPostModel = {
         const [rows] = await pool.execute(
             `SELECT dp.*, c.name AS category_name, sc.name AS subcategory_name
              FROM dealer_post dp
-             JOIN categories c ON dp.category_id = c.category_id
-             JOIN subcategories sc ON dp.subcategory_id = sc.subcategory_id
-             WHERE dp.dealer_id = ?`,
+             JOIN categories c ON dp.category_id = c.id
+             JOIN subcategories sc ON dp.subcategory_id = sc.id
+             WHERE dp.id = ?`,
             [id]
         );
         return rows[0];
+    },
+
+    // Get by Name (partial match)
+    async getByName(name) {
+        const [rows] = await pool.execute(
+            `SELECT *
+             FROM dealer_post dp
+             WHERE dp.title LIKE ?`,
+            [`%${name}%`]
+        );
+        return rows;
     },
 
     // Get by Subcategory
@@ -32,8 +51,8 @@ export const DealerPostModel = {
         const [rows] = await pool.execute(
             `SELECT dp.*, c.name AS category_name, sc.name AS subcategory_name
              FROM dealer_post dp
-             JOIN categories c ON dp.category_id = c.category_id
-             JOIN subcategories sc ON dp.subcategory_id = sc.subcategory_id
+             JOIN categories c ON dp.category_id = c.id
+             JOIN subcategories sc ON dp.subcategory_id = sc.id
              WHERE dp.subcategory_id = ?
              ORDER BY dp.created_at DESC`,
             [subcategoryId]
@@ -80,7 +99,7 @@ export const DealerPostModel = {
 
         const [result] = await pool.execute(
             `INSERT INTO dealer_post
-             (dealer_id, name, logo, photos, description, category_id, subcategory_id,
+             (id, title, logo, photos, description, category_id, subcategory_id,
               email, phone, whatsapp, website_url, social_links,
               address_line1, address_line2, city, country, location_map,
               services, services_starting_from, working_hours,
@@ -131,7 +150,7 @@ export const DealerPostModel = {
         const values = Object.values(data);
 
         const [result] = await pool.execute(
-            `UPDATE dealer_post SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE dealer_id = ?`,
+            `UPDATE dealer_post SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
             [...values, id]
         );
 
@@ -141,7 +160,7 @@ export const DealerPostModel = {
     // Delete dealer post
     async delete(id) {
         const [result] = await pool.execute(
-            `DELETE FROM dealer_post WHERE dealer_id = ?`,
+            `DELETE FROM dealer_post WHERE id = ?`,
             [id]
         );
         return result.affectedRows;

@@ -20,7 +20,9 @@ const upload = multer({ storage });
 
 // Routes
 router.get("/", JobPostController.getAllJobPosts);
+router.get("/hiring", JobPostController.getJobHiring);
 router.get("/:id", JobPostController.getJobPostById);
+router.get("/name/:name", JobPostController.getJobsByName);
 router.get("/subcategory/:subcategoryId", JobPostController.getJobPostsBySubcategoryId);
 
 // ✅ Updated route to handle file upload

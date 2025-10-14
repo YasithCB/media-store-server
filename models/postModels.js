@@ -3,7 +3,7 @@ import { pool } from "../db.js";
 export const getAllPosts = async () => {
     const [rows] = await pool.execute(`
         SELECT
-            dealer_id AS id,
+            id AS id,
             'dealer' AS type,
             logo AS logo,
             JSON_UNQUOTE(JSON_EXTRACT(photos, '$[0]')) AS image,
@@ -16,7 +16,7 @@ export const getAllPosts = async () => {
         UNION ALL
 
         SELECT
-            post_id AS id,
+            id AS id,
             'equipment' AS type,
             NULL AS logo,
             JSON_UNQUOTE(JSON_EXTRACT(photos, '$[0]')) AS image,
@@ -29,7 +29,7 @@ export const getAllPosts = async () => {
         UNION ALL
 
         SELECT
-            post_id AS id,
+            id AS id,
             'job' AS type,
             logo AS logo,
             NULL AS image,
@@ -59,8 +59,8 @@ export const getPostsByCategoryId = async (categoryId) => {
         `SELECT p.*, u.name AS user_name, sc.name AS subcategory_name, c.name AS category_name
          FROM posts p
                   JOIN user u ON p.user_id = u.user_id
-                  JOIN subcategories sc ON p.subcategory_id = sc.subcategory_id
-                  JOIN categories c ON p.category_id = c.category_id
+                  JOIN subcategories sc ON p.subcategory_id = sc.id
+                  JOIN categories c ON p.category_id = c.id
          WHERE p.category_id = ?`,
         [categoryId]
     );
@@ -73,12 +73,12 @@ export const getPostsBySubcategoryId = async (subcategoryId) => {
         `SELECT p.*,
                 u.name AS user_name,
                 COALESCE(AVG(r.rating), 0) AS avg_rating,
-                COUNT(r.review_id) AS total_reviews
+                COUNT(r.id) AS total_reviews
          FROM posts p
                   JOIN user u ON p.user_id = u.user_id
-                  LEFT JOIN reviews r ON p.post_id = r.post_id
+                  LEFT JOIN reviews r ON p.id = r.id
          WHERE p.subcategory_id = ?
-         GROUP BY p.post_id
+         GROUP BY p.id
          ORDER BY avg_rating DESC, total_reviews DESC`,
         [subcategoryId]
     );
@@ -87,16 +87,32 @@ export const getPostsBySubcategoryId = async (subcategoryId) => {
 
 // Get post by ID
 export const getPostById = async (postId) => {
-    const [rows] = await pool.query(
-        `SELECT p.*, u.name AS user_name, sc.name AS subcategory_name
-         FROM posts p
-         JOIN user u ON p.user_id = u.user_id
-         JOIN subcategories sc ON p.subcategory_id = sc.subcategory_id
-         WHERE p.post_id = ?`,
+    // 🟢 1. Check Equipment Post
+    let [rows] = await pool.query(
+        `SELECT *, 'equipment' AS type FROM equipment_post WHERE id = ? LIMIT 1`,
         [postId]
     );
-    return rows[0];
+    if (rows.length > 0) return rows[0];
+
+    // 🟢 2. Check Dealer Post
+    [rows] = await pool.query(
+        `SELECT *, 'dealer' AS type FROM dealer_post WHERE id = ? LIMIT 1`,
+        [postId]
+    );
+    if (rows.length > 0) return rows[0];
+
+    // 🟢 3. Check Job Post
+    [rows] = await pool.query(
+        `SELECT *, 'job' AS type FROM job_post WHERE id = ? LIMIT 1`,
+        [postId]
+    );
+    if (rows.length > 0) return rows[0];
+
+    // ❌ If not found anywhere
+    return null;
 };
+
+
 
 // Create post
 export const createPost = async ({ user_id, subcategory_id, title, description, price, media }) => {
@@ -105,7 +121,7 @@ export const createPost = async ({ user_id, subcategory_id, title, description, 
          VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())`,
         [user_id, subcategory_id, title, description, price, JSON.stringify(media)]
     );
-    return { post_id: result.insertId };
+    return { id: result.insertId };
 };
 
 // Update post
@@ -113,7 +129,7 @@ export const updatePost = async (postId, { subcategory_id, title, description, p
     const [result] = await pool.query(
         `UPDATE posts
          SET subcategory_id = ?, title = ?, description = ?, price = ?, media = ?, updated_at = NOW()
-         WHERE post_id = ?`,
+         WHERE id = ?`,
         [subcategory_id, title, description, price, JSON.stringify(media), postId]
     );
     return result.affectedRows;
@@ -122,7 +138,7 @@ export const updatePost = async (postId, { subcategory_id, title, description, p
 // Delete post
 export const deletePost = async (postId) => {
     const [result] = await pool.query(
-        `DELETE FROM posts WHERE post_id = ?`,
+        `DELETE FROM posts WHERE id = ?`,
         [postId]
     );
     return result.affectedRows;

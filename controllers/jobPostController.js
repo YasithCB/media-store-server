@@ -13,8 +13,26 @@ export const getAllJobPosts = async (req, res) => {
 export const getJobPostsBySubcategoryId = async (req, res) => {
     try {
         const { subcategoryId } = req.params;
-        const posts = await JobPostModel.getJobPostsBySubcategoryId(subcategoryId);
+        const posts = await JobPostModel.getBySubcategoryId(subcategoryId);
         return success(res, posts, "Job posts by subcategory fetched successfully");
+    } catch (err) {
+        return error(res, err.message);
+    }
+};
+
+export const getJobHiring = async (req, res) => {
+    try {
+        const posts = await JobPostModel.getHiring();
+        return success(res, posts, "Hiring Jobs fetched successfully");
+    } catch (err) {
+        return error(res, err.message);
+    }
+};
+
+export const getJobsByName = async (req, res) => {
+    try {
+        const posts = await JobPostModel.getByName(req.params.name);
+        return success(res, posts, `Jobs by name : ${req.params.name} | fetched successfully`);
     } catch (err) {
         return error(res, err.message);
     }

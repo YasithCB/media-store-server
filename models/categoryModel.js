@@ -6,7 +6,7 @@ export const getAllCategories = async () => {
 };
 
 export const getCategoryById = async (id) => {
-    const [rows] = await pool.execute("SELECT * FROM categories WHERE category_id = ?", [id]);
+    const [rows] = await pool.execute("SELECT * FROM categories WHERE id = ?", [id]);
     return rows[0] || null;
 };
 
@@ -20,7 +20,7 @@ export const createCategory = async (name, description, icon, image) => {
 
 export const updateCategory = async (id, name, description, icon, image) => {
     const [result] = await pool.execute(
-        "UPDATE categories SET name = ?, description = ?, icon = ?, image = ?, updated_at = CURRENT_TIMESTAMP WHERE category_id = ?",
+        "UPDATE categories SET name = ?, description = ?, icon = ?, image = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
         [name, description, icon, image, id]
     );
     return result.affectedRows;
@@ -28,7 +28,7 @@ export const updateCategory = async (id, name, description, icon, image) => {
 
 export const deleteCategory = async (id) => {
     const [result] = await pool.execute(
-        "DELETE FROM categories WHERE category_id = ?",
+        "DELETE FROM categories WHERE id = ?",
         [id]
     );
     return result.affectedRows;

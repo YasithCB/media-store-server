@@ -1,28 +1,88 @@
 import { pool } from "../db.js";
-import { v4 as uuidv4 } from "uuid";
 
 // Get all equipment posts
 export const getAllEquipmentPosts = async () => {
     const [rows] = await pool.execute(
         `SELECT ep.*, c.name AS category_name, sc.name AS subcategory_name
          FROM equipment_post ep
-                  JOIN categories c ON ep.category_id = c.category_id
-                  JOIN subcategories sc ON ep.subcategory_id = sc.subcategory_id
+                  JOIN categories c ON ep.category_id = c.id
+                  JOIN subcategories sc ON ep.subcategory_id = sc.id
          ORDER BY ep.created_at DESC`
     );
 
     return rows;
 };
 
+// Get by Name (partial match)
+export const getByName = async (name) => {
+    const [rows] = await pool.execute(
+        `SELECT *
+             FROM equipment_post ep
+             WHERE ep.title LIKE ?`,
+        [`%${name}%`]
+    );
+    return rows;
+}
+
+// Get all used equipment posts
+export const getUsed = async () => {
+    const [rows] = await pool.execute(
+        `SELECT *
+         FROM equipment_post ep
+         WHERE ep.is_used = 1
+         ORDER BY ep.created_at DESC`
+    );
+
+    return rows;
+};
+
+// Get all brand-new equipment posts
+export const getBrandNew = async () => {
+    const [rows] = await pool.execute(
+        `SELECT *
+         FROM equipment_post ep
+         WHERE ep.is_used = 0
+         ORDER BY ep.created_at DESC`
+    );
+
+    return rows;
+};
+
+// Get all renting equipment posts
+export const getRent = async () => {
+    const [rows] = await pool.execute(
+        `SELECT *
+         FROM equipment_post ep
+         WHERE ep.is_rent = 1
+         ORDER BY ep.created_at DESC`
+    );
+
+    return rows;
+};
+
+export const getOnSale = async () => {
+    const [rows] = await pool.query(
+        "SELECT * FROM equipment_post WHERE sale_price IS NOT NULL AND sale_price > 0 ORDER BY updated_at DESC"
+    );
+    return rows;
+};
+
+export const getTopRated = async (minRating = 4) => {
+    const [rows] = await pool.query(
+        "SELECT * FROM equipment_post WHERE rating >= ? ORDER BY rating DESC",
+        [minRating]
+    );
+    return rows;
+};
 
 // Get single equipment post by ID
 export const getEquipmentPostById = async (postId) => {
     const [rows] = await pool.execute(
         `SELECT ep.*, c.name AS category_name, sc.name AS subcategory_name
          FROM equipment_post ep
-         JOIN categories c ON ep.category_id = c.category_id
-         JOIN subcategories sc ON ep.subcategory_id = sc.subcategory_id
-         WHERE ep.post_id = ?`,
+         JOIN categories c ON ep.category_id = c.id
+         JOIN subcategories sc ON ep.subcategory_id = sc.id
+         WHERE ep.id = ?`,
         [postId]
     );
     return rows[0];
@@ -33,8 +93,8 @@ export const getEquipmentPostsBySubcategoryId = async (subcategoryId) => {
     const [rows] = await pool.execute(
         `SELECT ep.*, c.name AS category_name, sc.name AS subcategory_name
          FROM equipment_post ep
-                  JOIN categories c ON ep.category_id = c.category_id
-                  JOIN subcategories sc ON ep.subcategory_id = sc.subcategory_id
+                  JOIN categories c ON ep.category_id = c.id
+                  JOIN subcategories sc ON ep.subcategory_id = sc.id
          WHERE ep.subcategory_id = ?
          ORDER BY ep.created_at DESC`,
         [subcategoryId]
@@ -44,9 +104,9 @@ export const getEquipmentPostsBySubcategoryId = async (subcategoryId) => {
 
 export const generateEquipmentPostId = async () => {
     const query = `
-        SELECT post_id
+        SELECT id
         FROM equipment_post
-        ORDER BY post_id DESC
+        ORDER BY id DESC
         LIMIT 1
     `;
     const [rows] = await pool.execute(query);
@@ -55,7 +115,7 @@ export const generateEquipmentPostId = async () => {
         return "EP0001";
     }
 
-    const lastId = rows[0].post_id; // e.g. "EP0023"
+    const lastId = rows[0].id; // e.g. "EP0023"
     const numPart = parseInt(lastId.replace("EP", "")) + 1;
     return "EP" + numPart.toString().padStart(4, "0"); // e.g. "EP0024"
 };
@@ -66,7 +126,7 @@ export const createEquipmentPost = async (postData) => {
 
     const query = `
         INSERT INTO equipment_post (
-            post_id, title, contact, price, description, brand, model, \`usage\`, item_condition,
+            id, title, contact, price, description, brand, model, \`usage\`, item_condition,
             address_line1, address_line2, country, city, location,
             category_id, subcategory_id, photos
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -94,7 +154,7 @@ export const createEquipmentPost = async (postData) => {
     ];
 
     const [result] = await pool.execute(query, params);
-    return { post_id: postId, insertedId: result.insertId };
+    return { id: postId, insertedId: result.insertId };
 };
 
 
@@ -111,7 +171,7 @@ export const updateEquipmentPost = async (postId, fields) => {
     values.push(postId);
 
     const [result] = await pool.execute(
-        `UPDATE equipment_post SET ${setParts.join(", ")} WHERE post_id = ?`,
+        `UPDATE equipment_post SET ${setParts.join(", ")} WHERE id = ?`,
         values
     );
 
@@ -121,7 +181,7 @@ export const updateEquipmentPost = async (postId, fields) => {
 // Delete equipment post
 export const deleteEquipmentPost = async (postId) => {
     const [result] = await pool.execute(
-        "DELETE FROM equipment_post WHERE post_id = ?",
+        "DELETE FROM equipment_post WHERE id = ?",
         [postId]
     );
     return result.affectedRows > 0;

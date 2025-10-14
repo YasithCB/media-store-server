@@ -13,6 +13,80 @@ export const getAllEquipmentPosts = async (req, res) => {
     }
 };
 
+export const getEquipmentsOnSale = async (req, res) => {
+    try {
+        const posts = await EquipmentPostModel.getOnSale(); // pass threshold
+        return success(res, posts);
+    } catch (err) {
+        return error(res, err.message);
+    }
+};
+
+export const getEquipmentsByName = async (req, res) => {
+    try {
+        const posts = await EquipmentPostModel.getByName(req.params.name); // pass threshold
+        return success(res, posts, `Equipments by name : ${req.params.name} | fetched successfully`);
+    } catch (err) {
+        return error(res, err.message);
+    }
+};
+
+export const getEquipmentsTopRated = async (req, res) => {
+    try {
+        const posts = await EquipmentPostModel.getTopRated(); // pass threshold
+        return success(res, posts);
+    } catch (err) {
+        return error(res, err.message);
+    }
+};
+
+export const getUsedEquipments = async (req, res) => {
+    try {
+        const posts = await EquipmentPostModel.getUsed();
+        res.json({
+            success: true,
+            data: posts
+        });
+    } catch (error) {
+        console.error("Error fetching used equipments :", error);
+        res.status(500).json({
+            success: false,
+            message: "Server error"
+        });
+    }
+};
+
+export const getBrandNewEquipments = async (req, res) => {
+    try {
+        const posts = await EquipmentPostModel.getBrandNew();
+        res.json({
+            success: true,
+            data: posts
+        });
+    } catch (error) {
+        console.error("Error fetching Brand New equipments :", error);
+        res.status(500).json({
+            success: false,
+            message: "Server error"
+        });
+    }
+};
+
+export const getRentEquipments = async (req, res) => {
+    try {
+        const posts = await EquipmentPostModel.getRent();
+        res.json({
+            success: true,
+            data: posts
+        });
+    } catch (error) {
+        console.error("Error fetching renting equipments :", error);
+        res.status(500).json({
+            success: false,
+            message: "Server error"
+        });
+    }
+};
 
 // Get single equipment post
 export const getPostById = async (req, res) => {

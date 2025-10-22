@@ -2,7 +2,6 @@ import express from "express";
 import multer from "multer";
 import path from "path";
 import * as DealerPostController from "../controllers/dealerPostController.js";
-import * as EquipmentPostController from "../controllers/equipmentPostController.js";
 
 const router = express.Router();
 
@@ -11,7 +10,7 @@ const router = express.Router();
 // ------------------------
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, "uploads/dealer-posts");
+        cb(null, "uploads/dealers");
     },
     filename: (req, file, cb) => {
         const timestamp = Date.now();

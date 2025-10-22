@@ -6,7 +6,7 @@ export const DealerPostModel = {
     async getAll() {
         const [rows] = await pool.execute(
             `SELECT dp.*, c.name AS category_name, sc.name AS subcategory_name
-             FROM dealer_post dp
+             FROM dealer dp
              JOIN categories c ON dp.category_id = c.id
              JOIN subcategories sc ON dp.subcategory_id = sc.id
              ORDER BY dp.created_at DESC`
@@ -16,7 +16,7 @@ export const DealerPostModel = {
 
     async getTopRated (minRating = 4)  {
         const [rows] = await pool.query(
-            "SELECT * FROM dealer_post WHERE rating >= ? ORDER BY rating DESC",
+            "SELECT * FROM dealer WHERE rating >= ? ORDER BY rating DESC",
             [minRating]
         );
         return rows;
@@ -26,7 +26,7 @@ export const DealerPostModel = {
     async getById(id) {
         const [rows] = await pool.execute(
             `SELECT dp.*, c.name AS category_name, sc.name AS subcategory_name
-             FROM dealer_post dp
+             FROM dealer dp
              JOIN categories c ON dp.category_id = c.id
              JOIN subcategories sc ON dp.subcategory_id = sc.id
              WHERE dp.id = ?`,
@@ -39,7 +39,7 @@ export const DealerPostModel = {
     async getByName(name) {
         const [rows] = await pool.execute(
             `SELECT *
-             FROM dealer_post dp
+             FROM dealer dp
              WHERE dp.title LIKE ?`,
             [`%${name}%`]
         );
@@ -50,7 +50,7 @@ export const DealerPostModel = {
     async getBySubcategory(subcategoryId) {
         const [rows] = await pool.execute(
             `SELECT dp.*, c.name AS category_name, sc.name AS subcategory_name
-             FROM dealer_post dp
+             FROM dealer dp
              JOIN categories c ON dp.category_id = c.id
              JOIN subcategories sc ON dp.subcategory_id = sc.id
              WHERE dp.subcategory_id = ?
@@ -98,7 +98,7 @@ export const DealerPostModel = {
         console.log("=== Generated dealer_id ===", dealer_id);
 
         const [result] = await pool.execute(
-            `INSERT INTO dealer_post
+            `INSERT INTO dealer
              (id, title, logo, photos, description, category_id, subcategory_id,
               email, phone, whatsapp, website_url, social_links,
               address_line1, address_line2, city, country, location_map,
@@ -150,7 +150,7 @@ export const DealerPostModel = {
         const values = Object.values(data);
 
         const [result] = await pool.execute(
-            `UPDATE dealer_post SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+            `UPDATE dealer SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
             [...values, id]
         );
 
@@ -160,7 +160,7 @@ export const DealerPostModel = {
     // Delete dealer post
     async delete(id) {
         const [result] = await pool.execute(
-            `DELETE FROM dealer_post WHERE id = ?`,
+            `DELETE FROM dealer WHERE id = ?`,
             [id]
         );
         return result.affectedRows;

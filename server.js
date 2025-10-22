@@ -10,6 +10,7 @@ import jobPostRoutes from "./routes/jobPostRoutes.js";
 import dealerPostRoutes from "./routes/dealerPostRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import cors from "cors";
+import studioRoutes from "./routes/studioRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -26,6 +27,7 @@ app.use("/auth", authRoutes);
 
 // Routes
 app.use("/users", userRoutes);
+app.use("/dealer", dealerPostRoutes);
 app.use("/categories", categoryRoutes);
 app.use("/subcategories", subCategoryRoutes);
 app.use("/posts", postRoutes);
@@ -33,7 +35,7 @@ app.use("/reviews", reviewRoutes);
 
 app.use("/equipment-posts", equipmentPostRoutes);
 app.use("/job-posts", jobPostRoutes);
-app.use("/dealer-posts", dealerPostRoutes);
+app.use("/studio-posts", studioRoutes);
 
 
 app.get("/", (req, res) => {

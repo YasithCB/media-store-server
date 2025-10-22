@@ -102,6 +102,18 @@ export const getEquipmentPostsBySubcategoryId = async (subcategoryId) => {
     return rows;
 };
 
+// Get the best equipment post by subcategory ID
+export const getBestEquipmentBySubcategoryId = async (subcategoryId) => {
+    const [rows] = await pool.execute(
+        `SELECT ep.*
+         FROM equipment_post ep
+         WHERE ep.subcategory_id = ?
+         ORDER BY ep.rating DESC`,
+        [subcategoryId]
+    );
+    return rows[0];
+};
+
 export const generateEquipmentPostId = async () => {
     const query = `
         SELECT id
@@ -126,19 +138,22 @@ export const createEquipmentPost = async (postData) => {
 
     const query = `
         INSERT INTO equipment_post (
-            id, title, contact, price, description, brand, model, \`usage\`, item_condition,
-            address_line1, address_line2, country, city, location,
-            category_id, subcategory_id, photos
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            id, title, category_title, sub_category_title, contact, email, price, sale_price, description,
+            brand, model, \`usage\`, item_condition, address_line1, address_line2, country, city, location,
+            category_id, subcategory_id, photos, is_rent, is_used
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
-
 
     const params = [
         postId,
-        postData.title,
-        postData.contact,
+        postData.title || null,
+        postData.category_title || null,
+        postData.sub_category_title || null,
+        postData.contact || null,
+        postData.email || null,
         postData.price || null,
-        postData.description,
+        postData.sale_price || null,
+        postData.description || null,
         postData.brand || null,
         postData.model || null,
         postData.usage || null,
@@ -148,9 +163,11 @@ export const createEquipmentPost = async (postData) => {
         postData.country || null,
         postData.city || null,
         postData.location || null,
-        postData.category_id,
-        postData.subcategory_id,
-        JSON.stringify(postData.photos || [])
+        postData.category_id || null,
+        postData.subcategory_id || null,
+        JSON.stringify(postData.photos || []),
+        postData.is_rent ? 1 : 0,
+        postData.is_used ? 1 : 0
     ];
 
     const [result] = await pool.execute(query, params);

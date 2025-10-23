@@ -74,29 +74,50 @@ export const createDealerPost = async (req, res) => {
         const postData = {
             dealer_id: req.body.dealer_id ?? null,
             name: req.body.name ?? null,
-            logo: logoPath,
+            password: req.body.password ?? null,
+            logo: logoPath ?? null,
             photos: photosPaths.length ? JSON.stringify(photosPaths) : null,
             description: req.body.description ?? null,
+
+            // ✅ category and subcategory info
             category_id: req.body.category_id ?? null,
+            category_title: req.body.category_title ?? null,       // added
             subcategory_id: req.body.subcategory_id ?? null,
+            subcategory_title: req.body.subcategory_title ?? null, // added
+
             email: req.body.email ?? null,
             phone: req.body.phone ?? null,
             whatsapp: req.body.whatsapp ?? null,
             website_url: req.body.website_url ?? null,
+
             address_line1: req.body.address_line1 ?? null,
             address_line2: req.body.address_line2 ?? null,
             city: req.body.city ?? null,
             country: req.body.country ?? null,
-            location_map: req.body.location_map ? JSON.stringify(JSON.parse(req.body.location_map)) : null,
-            services: req.body.services ? JSON.stringify(JSON.parse(req.body.services)) : null,
+
+            location_map: req.body.location_map
+                ? JSON.stringify(JSON.parse(req.body.location_map))
+                : null,
+
+            services: req.body.services
+                ? JSON.stringify(JSON.parse(req.body.services))
+                : null,
+
             services_starting_from: req.body.services_starting_from ?? null,
-            working_hours: req.body.working_hours ? JSON.stringify(JSON.parse(req.body.working_hours)) : null,
+
+            working_hours: req.body.working_hours
+                ? JSON.stringify(JSON.parse(req.body.working_hours))
+                : null,
+
             rating: req.body.rating ?? 0,
             reviews_count: req.body.reviews_count ?? 0,
             verified: req.body.verified ?? 0,
             established_year: req.body.established_year ?? null,
             featured: req.body.featured ?? 0,
-            tags: req.body.tags ? JSON.stringify(JSON.parse(req.body.tags)) : null,
+
+            tags: req.body.tags
+                ? JSON.stringify(JSON.parse(req.body.tags))
+                : null,
         };
 
         console.log("=== Prepared Post Data ===");
@@ -110,14 +131,16 @@ export const createDealerPost = async (req, res) => {
         const post = await DealerPostModel.create(postData);
 
         return res.status(201).json({
-            success: true,
+            status: "success",            // matches your registration example
+            code: 201,
             message: "Dealer post created successfully",
             data: post
         });
     } catch (err) {
         console.error("=== createDealerPost Error ===", err);
         return res.status(500).json({
-            success: false,
+            status: "error",
+            code: 500,
             message: err.message,
         });
     }

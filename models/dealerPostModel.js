@@ -70,8 +70,11 @@ export const DealerPostModel = {
             photos,
             description,
             category_id,
+            category_title,        // ✅ new
             subcategory_id,
+            subcategory_title,     // ✅ new
             email,
+            password,
             phone,
             whatsapp,
             website_url,
@@ -99,20 +102,23 @@ export const DealerPostModel = {
 
         const [result] = await pool.execute(
             `INSERT INTO dealer
-             (id, title, logo, photos, description, category_id, subcategory_id,
-              email, phone, whatsapp, website_url, social_links,
+             (id, password, title, logo, photos, description, category_id, category_title,
+              subcategory_id, subcategory_title, email, phone, whatsapp, website_url, social_links,
               address_line1, address_line2, city, country, location_map,
               services, services_starting_from, working_hours,
               rating, reviews_count, verified, established_year, featured, tags)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
             [
                 dealer_id,
+                password || null,
                 name || null,
                 logo || null,
                 photos || null,
                 description || null,
                 category_id || null,
+                category_title || "Top Dealers", // ✅ fallback default
                 subcategory_id || null,
+                subcategory_title || "Other",    // ✅ fallback default
                 email || null,
                 phone || null,
                 whatsapp || null,
@@ -134,7 +140,6 @@ export const DealerPostModel = {
                 tags || null
             ]
         );
-
 
         console.log("=== Dealer post created result ===", result);
 

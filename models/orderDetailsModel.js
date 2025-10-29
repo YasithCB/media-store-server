@@ -13,7 +13,7 @@ export const saveMultipleOrderDetails = async (payment_id, user_id, items) => {
         item.id,
         item.category_title,
         item.quantity || 1,
-        JSON.stringify(items) // <-- store the entire list as JSON string
+        JSON.stringify(item) // <-- store the entire list as JSON string
     ]);
 
     const [result] = await pool.query(

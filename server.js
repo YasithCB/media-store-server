@@ -11,6 +11,9 @@ import dealerPostRoutes from "./routes/dealerPostRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import cors from "cors";
 import studioRoutes from "./routes/studioRoutes.js";
+import wishlistRoutes from "./routes/wishlistRoutes.js";
+import cartRoutes from "./routes/cartRoutes.js";
+import paymentRoutes from "./routes/paymentRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -37,6 +40,9 @@ app.use("/equipment-posts", equipmentPostRoutes);
 app.use("/job-posts", jobPostRoutes);
 app.use("/studio-posts", studioRoutes);
 
+app.use("/wishlist", wishlistRoutes);
+app.use("/cart", cartRoutes);
+app.use("/payments", paymentRoutes);
 
 app.get("/", (req, res) => {
     res.send("Media Store Server is online 🚀");

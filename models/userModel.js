@@ -7,7 +7,7 @@ export const UserModel = {
             `INSERT INTO user (name, email, password, phone, profile_picture) VALUES (?, ?, ?, ?, ?)`,
             [name, email, password, phone, profile_picture]
         );
-        return { user_id: result.insertId, ...user };
+        return { id: result.insertId, ...user };
     },
 
     async findByEmail(email) {
@@ -20,8 +20,8 @@ export const UserModel = {
 
     async findById(user_id) {
         const [rows] = await pool.execute(
-            `SELECT user_id, name, email, phone, profile_picture, created_at, updated_at
-             FROM user WHERE user_id = ?`,
+            `SELECT id, name, email, phone, profile_picture, created_at, updated_at
+             FROM user WHERE id = ?`,
             [user_id]
         );
         return rows[0];
@@ -34,7 +34,7 @@ export const UserModel = {
         const values = Object.values(data);
 
         const [result] = await pool.execute(
-            `UPDATE user SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`,
+            `UPDATE user SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
             [...values, user_id]
         );
         return result.affectedRows;
@@ -44,7 +44,7 @@ export const UserModel = {
     async saveResetOTP(userId, otp) {
         const expires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
         await pool.execute(
-            "UPDATE user SET reset_otp = ?, otp_expires_at = ? WHERE user_id = ?",
+            "UPDATE user SET reset_otp = ?, otp_expires_at = ? WHERE id = ?",
             [otp, expires, userId]
         );
     },
@@ -52,7 +52,7 @@ export const UserModel = {
 
     async verifyResetOTP(userId, otp) {
         const [rows] = await pool.execute(
-            "SELECT * FROM user WHERE user_id = ? AND reset_otp = ? AND otp_expires_at > NOW()",
+            "SELECT * FROM user WHERE id = ? AND reset_otp = ? AND otp_expires_at > NOW()",
             [userId, otp]
         );
         console.log(rows)
@@ -61,7 +61,7 @@ export const UserModel = {
 
     async saveResetToken(userId, token) {
         await pool.execute(
-            "UPDATE user SET reset_token = ?, reset_otp = NULL, otp_expires_at = NULL WHERE user_id = ?",
+            "UPDATE user SET reset_token = ?, reset_otp = NULL, otp_expires_at = NULL WHERE id = ?",
             [token, userId]
         );
     },
@@ -76,7 +76,7 @@ export const UserModel = {
 
     async updatePassword(userId, hashedPassword) {
         await pool.execute(
-            "UPDATE user SET password = ?, reset_token = NULL WHERE user_id = ?",
+            "UPDATE user SET password = ?, reset_token = NULL WHERE id = ?",
             [hashedPassword, userId]
         );
     }

@@ -74,7 +74,8 @@ export const removeCartItem = async (req, res) => {
 
 // Clear entire cart for a user
 export const clearUserCart = async (req, res) => {
-    const { user_id } = req.body;
+    const { user_id } = req.params;
+
     try {
         if (!user_id) return error(res, "Missing user_id");
 

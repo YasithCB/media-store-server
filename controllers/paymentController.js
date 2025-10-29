@@ -1,5 +1,6 @@
 import axios from "axios";
 import {error, success} from "../helpers/response.js";
+import { saveMultipleOrderDetails } from "../models/orderDetailsModel.js";
 import * as PaymentModel from "../models/paymentModel.js";
 
 /**
@@ -116,6 +117,9 @@ export const savePaymentDetails = async (req, res) => {
     try {
         const data = req.body;
 
+        console.log('savePaymentDetails data')
+        console.log(data)
+
         if (!data.user_id || !data.amount) {
             return error(res, "Missing required fields: user_id or amount");
         }
@@ -135,14 +139,18 @@ export const savePaymentDetails = async (req, res) => {
             response_data: data.response_data ? JSON.stringify(data.response_data) : null
         };
 
-        // Save in database
+        // 1️⃣ Save payment
         const paymentId = await PaymentModel.createPayment(paymentData);
 
-        const savedPayment = await PaymentModel.getPaymentByOrderId(paymentId);
+        // 2️⃣ Save order details if items exist
+        if (data.items && Array.isArray(data.items) && data.items.length > 0) {
+            await saveMultipleOrderDetails(paymentId, data.user_id, data.items);
+        }
 
+        // 3️⃣ Fetch the full saved payment
+        const savedPayment = await PaymentModel.getPaymentByOrderId(paymentId);
         console.log('Payment saved:', savedPayment);
 
-        // Respond with the full saved payment object
         return success(res, savedPayment, "Payment saved successfully");
     } catch (err) {
         console.error(err);

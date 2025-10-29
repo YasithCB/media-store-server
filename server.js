@@ -43,6 +43,7 @@ app.use("/studio-posts", studioRoutes);
 app.use("/wishlist", wishlistRoutes);
 app.use("/cart", cartRoutes);
 app.use("/payments", paymentRoutes);
+app.use("/orders", paymentRoutes);
 
 app.get("/", (req, res) => {
     res.send("Media Store Server is online 🚀");

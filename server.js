@@ -14,6 +14,7 @@ import studioRoutes from "./routes/studioRoutes.js";
 import wishlistRoutes from "./routes/wishlistRoutes.js";
 import cartRoutes from "./routes/cartRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
+import orderDetailsRoutes from "./routes/orderDetailsRoutes.js";
 
 dotenv.config();
 const app = express();
@@ -43,7 +44,7 @@ app.use("/studio-posts", studioRoutes);
 app.use("/wishlist", wishlistRoutes);
 app.use("/cart", cartRoutes);
 app.use("/payments", paymentRoutes);
-app.use("/orders", paymentRoutes);
+app.use("/orders", orderDetailsRoutes);
 
 app.get("/", (req, res) => {
     res.send("Media Store Server is online 🚀");

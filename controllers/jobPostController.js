@@ -51,9 +51,6 @@ export const getJobPostById = async (req, res) => {
 
 export const createJobPost = async (req, res) => {
     try {
-        console.log("REQ FILE:", req.file);
-        console.log("REQ BODY:", req.body);
-
         const postData = {
             ...req.body,
             logo: req.file ? req.file.path : null,
@@ -61,8 +58,6 @@ export const createJobPost = async (req, res) => {
                 ? req.body.expiry_date
                 : null
         };
-
-        console.log("FINAL POST DATA:", postData);
 
         const result = await JobPostModel.createJobPost(postData);
         return success(res, result, "Job post created successfully", 201);
@@ -72,20 +67,68 @@ export const createJobPost = async (req, res) => {
     }
 };
 
-
-
-
+// req.file -> single file upload (logo)
 export const updateJobPost = async (req, res) => {
     try {
-        const { id } = req.params;
-        const postData = req.body;
-        const result = await JobPostModel.updateJobPost(id, postData);
-        if (!result.affectedRows) return error(res, "Update failed", 400);
-        return success(res, result, "Job post updated successfully");
+        const postId = req.params.id;
+
+        // Prepare post data
+        const postData = { ...req.body };
+
+        // Handle logo file
+        if (req.file) {
+            postData.logo = req.file.path;
+        } else if (req.body.logo === undefined) {
+            postData.logo = null;
+        }
+
+        // Parse JSON fields safely
+        if (req.body.tags) {
+            try {
+                postData.tags = JSON.parse(req.body.tags);
+            } catch {
+                postData.tags = [];
+            }
+        } else {
+            postData.tags = [];
+        }
+
+        // Boolean fields
+        postData.remote = postData.remote === "1" || postData.remote === 1 || postData.remote === true ? 1 : 0;
+        postData.is_hiring = postData.is_hiring === "1" || postData.is_hiring === 1 || postData.is_hiring === true ? 1 : 0;
+
+        // Allowed columns to update (exclude id, created_at)
+        const allowedFields = [
+            "title", "company_name", "logo", "location", "country", "job_type", "industry",
+            "experience_level", "salary", "salary_type", "description", "posted_date",
+            "email", "phone", "application_url", "remote", "tags", "category_id", "subcategory_id",
+            "is_hiring"
+        ];
+
+        const fieldsToUpdate = {};
+        for (const [key, val] of Object.entries(postData)) {
+            if (!allowedFields.includes(key)) continue;
+            fieldsToUpdate[key] = val === undefined ? null : val;
+        }
+
+        // Update the job post
+        const updated = await JobPostModel.updateJobPost(postId, fieldsToUpdate);
+
+        if (!updated) {
+            return res.status(404).json({ status: "error", message: "Post not found or not updated" });
+        }
+
+        return res.status(200).json({
+            status: "success",
+            data: null,
+            message: "Job post updated successfully"
+        });
     } catch (err) {
-        return error(res, err.message);
+        console.error(err);
+        return res.status(500).json({ status: "error", message: err.message });
     }
 };
+
 
 export const deleteJobPost = async (req, res) => {
     try {

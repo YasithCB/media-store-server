@@ -30,6 +30,13 @@ router.post(
     upload.array("photos", 10), // changed to .array so it's easier to handle
     EquipmentPostController.createEquipmentPost
 );
+// UPDATE
+router.put(
+    "/:id",
+    upload.array("photos", 10), // same as create
+    EquipmentPostController.updateEquipmentPost
+);
+
 
 router.get("/", EquipmentPostController.getAllEquipmentPosts);
 router.get("/on-sale", EquipmentPostController.getEquipmentsOnSale);
@@ -40,7 +47,6 @@ router.get("/rent", EquipmentPostController.getRentEquipments);
 router.get("/subcategory/:subcategoryId", EquipmentPostController.getPostsBySubcategoryId);
 router.get("/:id", EquipmentPostController.getPostById);
 router.get("/name/:name", EquipmentPostController.getEquipmentsByName);
-router.put("/:id", EquipmentPostController.updatePost);
 router.delete("/:id", EquipmentPostController.deletePost);
 
 export default router;

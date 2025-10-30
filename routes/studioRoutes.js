@@ -23,11 +23,18 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-// Routes
+// save
 router.post(
     "/",
     upload.array("photos", 10), // changed to .array so it's easier to handle
     StudioController.createStudio
+);
+
+// Update Studio by ID
+router.put(
+    "/:id",
+    upload.array("photos", 10), // handle multiple photo uploads
+    StudioController.updateStudio // make sure you implement this in your controller
 );
 
 router.get("/", StudioController

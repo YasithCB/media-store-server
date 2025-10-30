@@ -45,6 +45,53 @@ export const getAllPosts = async () => {
     return rows;
 };
 
+export const getPostsByUserId = async (userId) => {
+    const [rows] = await pool.execute(`
+        SELECT
+            id AS id,
+            'Studios' AS type,
+            NULL AS logo,
+            JSON_UNQUOTE(JSON_EXTRACT(photos, '$[0]')) AS image,
+            title,
+            description,
+            price,
+            NULL AS salary
+        FROM studio
+        WHERE user_id = ?
+
+        UNION ALL
+
+        SELECT
+            id AS id,
+            'Equipments & Machinery' AS type,
+            NULL AS logo,
+            JSON_UNQUOTE(JSON_EXTRACT(photos, '$[0]')) AS image,
+            title,
+            description,
+            price,
+            NULL AS salary
+        FROM equipment_post
+        WHERE user_id = ?
+
+        UNION ALL
+
+        SELECT
+            id AS id,
+            'jobs' AS type,
+            logo AS logo,
+            logo AS image,
+            title,
+            description,
+            NULL AS price,
+            salary
+        FROM job_post
+        WHERE user_id = ?
+
+        ORDER BY id DESC
+    `, [userId, userId, userId]);
+
+    return rows;
+};
 
 export const getPostsByRating = async (minRating) => {
     const [rows] = await pool.query(
@@ -96,7 +143,7 @@ export const getPostById = async (postId) => {
 
     // 🟢 2. Check Dealer Post
     [rows] = await pool.query(
-        `SELECT *, 'dealer' AS type FROM dealer_post WHERE id = ? LIMIT 1`,
+        `SELECT *, 'studio' AS type FROM studio WHERE id = ? LIMIT 1`,
         [postId]
     );
     if (rows.length > 0) return rows[0];
@@ -135,11 +182,47 @@ export const updatePost = async (postId, { subcategory_id, title, description, p
     return result.affectedRows;
 };
 
-// Delete post
+// Delete post by ID (checks table first)
 export const deletePost = async (postId) => {
-    const [result] = await pool.query(
-        `DELETE FROM posts WHERE id = ?`,
+    // 1️⃣ Check Equipment Post
+    let [rows] = await pool.query(
+        `SELECT id FROM equipment_post WHERE id = ? LIMIT 1`,
         [postId]
     );
-    return result.affectedRows;
+    if (rows.length > 0) {
+        const [result] = await pool.query(
+            `DELETE FROM equipment_post WHERE id = ?`,
+            [postId]
+        );
+        return { deleted: result.affectedRows, type: "equipment" };
+    }
+
+    // 2️⃣ Check Studio Post
+    [rows] = await pool.query(
+        `SELECT id FROM studio WHERE id = ? LIMIT 1`,
+        [postId]
+    );
+    if (rows.length > 0) {
+        const [result] = await pool.query(
+            `DELETE FROM studio WHERE id = ?`,
+            [postId]
+        );
+        return { deleted: result.affectedRows, type: "studio" };
+    }
+
+    // 3️⃣ Check Job Post
+    [rows] = await pool.query(
+        `SELECT id FROM job_post WHERE id = ? LIMIT 1`,
+        [postId]
+    );
+    if (rows.length > 0) {
+        const [result] = await pool.query(
+            `DELETE FROM job_post WHERE id = ?`,
+            [postId]
+        );
+        return { deleted: result.affectedRows, type: "job" };
+    }
+
+    // ❌ Not found
+    return { deleted: 0, type: null };
 };

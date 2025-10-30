@@ -83,15 +83,16 @@ export const createJobPost = async (postData) => {
 
     const query = `
         INSERT INTO job_post (
-            id, title, company_name, logo, location, country, job_type, industry,
+            id,user_id, title, company_name, logo, location, country, job_type, industry,
             experience_level, salary, salary_type, description, posted_date, expiry_date,
             email, phone, application_url, remote, tags, category_id, subcategory_id,
             is_hiring
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
         postData.id,
+        postData.user_id,
         postData.title ?? null,
         postData.company_name ?? null,
         postData.logo ?? null,
@@ -119,26 +120,51 @@ export const createJobPost = async (postData) => {
     return result;
 };
 
-// Update job post
-export const updateJobPost = async (postId, postData) => {
-    const query = `
-        UPDATE job_post SET
-            title = ?, company_name = ?, logo = ?, location = ?, country = ?, job_type = ?, industry = ?,
-            experience_level = ?, salary = ?, salary_type = ?, description = ?, posted_date = ?, expiry_date = ?,
-            email = ?, phone = ?, application_url = ?, remote = ?, tags = ?, category_id = ?, subcategory_id = ?,
-            is_hiring = ?
-        WHERE id = ?
-    `;
-    const params = [
-        postData.title, postData.company_name, postData.logo, postData.location, postData.country,
-        postData.job_type, postData.industry, postData.experience_level, postData.salary, postData.salary_type,
-        postData.description, postData.posted_date, postData.expiry_date, postData.email, postData.phone,
-        postData.application_url, postData.remote, JSON.stringify(postData.tags), postData.category_id,
-        postData.subcategory_id, postData.is_hiring, postId
+
+// UPDATE existing job post
+export const updateJobPost = async (postId, fields) => {
+    if (!fields || Object.keys(fields).length === 0) return false;
+
+    // ✅ Allowed columns (don't include id or created_at)
+    const allowedFields = [
+        "title", "company_name", "logo", "location", "country", "job_type", "industry",
+        "experience_level", "salary", "salary_type", "description",
+        "expiry_date", "email", "phone", "application_url", "remote", "tags",
+        "category_id", "subcategory_id", "is_hiring"
     ];
-    const [result] = await pool.execute(query, params);
-    return result;
+
+    const setParts = [];
+    const values = [];
+
+    for (const [key, val] of Object.entries(fields)) {
+        if (!allowedFields.includes(key)) continue; // skip unrecognized fields
+
+        let value = val;
+        if (value === undefined) value = null;
+
+        // Handle JSON fields
+        if (key === "tags") value = JSON.stringify(value || []);
+
+        setParts.push(`\`${key}\` = ?`);
+        values.push(value);
+    }
+
+    // ✅ Add automatic timestamp update
+    setParts.push("updated_at = CURRENT_TIMESTAMP");
+
+    // If there’s nothing to update, stop
+    if (setParts.length === 0) return false;
+
+    values.push(postId);
+
+    const [result] = await pool.execute(
+        `UPDATE job_post SET ${setParts.join(", ")} WHERE id = ?`,
+        values
+    );
+
+    return result.affectedRows > 0;
 };
+
 
 // Delete job post
 export const deleteJobPost = async (postId) => {

@@ -10,6 +10,20 @@ export const getAllPosts = async (req, res) => {
     }
 };
 
+export const getPostsByUserId = async (req, res) => {
+    try {
+        const { userId } = req.params; // or req.query if you prefer
+        if (!userId) {
+            return res.status(400).json({ success: false, message: "User ID is required" });
+        }
+
+        const posts = await postModel.getPostsByUserId(userId);
+        return res.status(200).json({ success: true, data: posts });
+    } catch (err) {
+        return res.status(500).json({ success: false, message: err.message });
+    }
+};
+
 export const getHighRatedPosts = async (req, res) => {
     try {
         const posts = await postModel.getPostsByRating(3); // pass threshold

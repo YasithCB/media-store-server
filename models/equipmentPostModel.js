@@ -138,14 +138,15 @@ export const createEquipmentPost = async (postData) => {
 
     const query = `
         INSERT INTO equipment_post (
-            id, title, category_title, sub_category_title, contact, email, price, sale_price, description,
+            id, user_id, title, category_title, sub_category_title, contact, email, price, sale_price, description,
             brand, model, \`usage\`, item_condition, address_line1, address_line2, country, city, location,
             category_id, subcategory_id, photos, is_rent, is_used
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
         postId,
+        postData.user_id,
         postData.title || null,
         postData.category_title || null,
         postData.sub_category_title || null,
@@ -175,15 +176,37 @@ export const createEquipmentPost = async (postData) => {
 };
 
 
-// Update existing equipment post
+// UPDATE existing equipment post (only details, auto-update updated_at)
 export const updateEquipmentPost = async (postId, fields) => {
+    if (!fields || Object.keys(fields).length === 0) return false;
+
+    console.log('updateEquipmentPost --> fields');
+    console.log(fields);
+
+    // Allowed columns to update (exclude id and created_at)
+    const allowedFields = [
+        "title", "category_title", "sub_category_title", "contact", "email", "price", "sale_price",
+        "description", "brand", "model", "usage", "item_condition", "address_line1", "address_line2",
+        "country", "city", "location", "category_id", "subcategory_id", "photos",
+        "is_rent", "is_used", "rating"
+    ];
+
     const setParts = [];
     const values = [];
 
     for (const [key, val] of Object.entries(fields)) {
+        if (!allowedFields.includes(key)) continue; // skip unknown or forbidden fields
+
+        const value = val === undefined ? null : (key === "photos" ? JSON.stringify(val) : val);
         setParts.push(`\`${key}\` = ?`);
-        values.push(key === "photos" ? JSON.stringify(val) : val);
+        values.push(value);
     }
+
+    // If nothing to update, return false
+    if (setParts.length === 0) return false;
+
+    // Auto-update updated_at
+    setParts.push("updated_at = NOW()");
 
     values.push(postId);
 
@@ -194,6 +217,7 @@ export const updateEquipmentPost = async (postId, fields) => {
 
     return result.affectedRows > 0;
 };
+
 
 // Delete equipment post
 export const deleteEquipmentPost = async (postId) => {

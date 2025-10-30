@@ -28,7 +28,13 @@ router.get("/subcategory/:subcategoryId", JobPostController.getJobPostsBySubcate
 // ✅ Updated route to handle file upload
 router.post("/", upload.single("logo"), JobPostController.createJobPost);
 
-router.put("/:id", JobPostController.updateJobPost);
+// Update an existing job post by ID
+router.put(
+    "/:id",
+    upload.single("logo"), // handles single file upload for 'logo'
+    JobPostController.updateJobPost
+);
+
 router.delete("/:id", JobPostController.deleteJobPost);
 
 export default router;

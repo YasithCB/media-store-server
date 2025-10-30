@@ -48,10 +48,17 @@ export const login = async (req, res) => {
     try {
         const { email, password } = req.body;
         const user = await UserModel.findByEmail(email);
-        console.log(user)
+        console.log('' +
+            'login user',user )
         if (!user) return error(res, "Invalid email or password", 401);
 
-        const isMatch = await bcrypt.compare(password, user.password.trim());
+        const hash = await bcrypt.hash(password, 10);
+        console.log(hash);
+
+        console.log('Input password:', password);
+        console.log('Stored hash:', user.password);
+        const isMatch = await bcrypt.compare(password, user.password);
+        console.log('Password match?', isMatch);
         if (!isMatch) return error(res, "Invalid email or password", 401);
 
         const token = jwt.sign({ user_id: user.user_id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });

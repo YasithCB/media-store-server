@@ -127,16 +127,49 @@ export const createEquipmentPost = async (req, res) => {
 };
 
 // Update equipment post
-export const updatePost = async (req, res) => {
+export const updateEquipmentPost = async (req, res) => {
     try {
         const { id } = req.params;
-        const updated = await EquipmentPostModel.updateEquipmentPost(id, req.body);
-        if (!updated) return error(res, "Post not found or not updated", 404);
-        return success(res, null, "Equipment post updated successfully");
+
+        console.log('updateEquipmentPost --> req.body');
+        console.log(req.body);
+
+        // Ensure photos array is always defined
+        let photosArray;
+        if (req.files && req.files.length > 0) {
+            // New photos uploaded
+            photosArray = req.files.map(f => f.path);
+        } else if (req.body.photos) {
+            // Keep existing photos (from frontend)
+            photosArray = Array.isArray(req.body.photos)
+                ? req.body.photos
+                : [req.body.photos];
+        } else {
+            photosArray = []; // No photos at all
+        }
+
+        // Build safe postData: replace undefined with null
+        const postData = {};
+        for (const [key, value] of Object.entries(req.body)) {
+            postData[key] = value === undefined ? null : value;
+        }
+
+        postData.photos = photosArray;
+
+        // Call model to update
+        const updated = await EquipmentPostModel.updateEquipmentPost(id, postData);
+
+        if (!updated) {
+            return error(res, "Post not found or not updated", 404);
+        }
+
+        return success(res, null, "Equipment post updated successfully", 200);
     } catch (err) {
         return error(res, err.message);
     }
 };
+
+
 
 // Delete equipment post
 export const deletePost = async (req, res) => {

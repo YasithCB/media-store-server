@@ -105,6 +105,7 @@ export const updateJobPost = async (req, res) => {
             "is_hiring"
         ];
 
+
         const fieldsToUpdate = {};
         for (const [key, val] of Object.entries(postData)) {
             if (!allowedFields.includes(key)) continue;

@@ -86,8 +86,8 @@ export const createJobPost = async (postData) => {
             id,user_id, title, company_name, logo, location, country, job_type, industry,
             experience_level, salary, salary_type, description, posted_date, expiry_date,
             email, phone, application_url, remote, tags, category_id, subcategory_id,
-            is_hiring
-        ) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            subcategory_title, is_hiring, quantity
+        ) VALUES (?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
@@ -113,7 +113,9 @@ export const createJobPost = async (postData) => {
         JSON.stringify(postData.tags || []),
         postData.category_id ?? null,
         postData.subcategory_id ?? null,
-        postData.is_hiring != null ? postData.is_hiring : 1
+        postData.subcategory_title ?? null,
+        postData.is_hiring != null ? postData.is_hiring : 1,
+        postData.quality ?? 1
     ];
 
     const [result] = await pool.execute(query, params);

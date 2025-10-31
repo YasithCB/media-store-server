@@ -16,7 +16,7 @@ export const createStudio = async (studioData) => {
 
     const query = `
         INSERT INTO studio (
-            id, user_id, title, category_title, sub_category_title, contact, price, description,
+            id, user_id, title, category_title, subcategory_title, contact, price, description,
             country, city, location, category_id, subcategory_id, photos, sale_price, rating, is_rent
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
@@ -26,7 +26,7 @@ export const createStudio = async (studioData) => {
         studioData.user_id || null, // ✅ fixed: was userId before
         studioData.title || null,
         studioData.category_title || 'Studios',
-        studioData.sub_category_title || null,
+        studioData.subcategory_title || null,
         studioData.contact || null,
         studioData.price || null,
         studioData.description || null,

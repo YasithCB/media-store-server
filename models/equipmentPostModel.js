@@ -138,10 +138,10 @@ export const createEquipmentPost = async (postData) => {
 
     const query = `
         INSERT INTO equipment_post (
-            id, user_id, title, category_title, sub_category_title, contact, email, price, sale_price, description,
+            id, user_id, title, category_title, subcategory_title, contact, email, price, sale_price, description,
             brand, model, \`usage\`, item_condition, address_line1, address_line2, country, city, location,
-            category_id, subcategory_id, photos, is_rent, is_used
-        ) VALUES (?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            category_id, subcategory_id, photos, is_rent, is_used, quantity
+        ) VALUES (?, ?,?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const params = [
@@ -149,7 +149,7 @@ export const createEquipmentPost = async (postData) => {
         postData.user_id,
         postData.title || null,
         postData.category_title || null,
-        postData.sub_category_title || null,
+        postData.subcategory_title || null,
         postData.contact || null,
         postData.email || null,
         postData.price || null,
@@ -168,7 +168,8 @@ export const createEquipmentPost = async (postData) => {
         postData.subcategory_id || null,
         JSON.stringify(postData.photos || []),
         postData.is_rent ? 1 : 0,
-        postData.is_used ? 1 : 0
+        postData.is_used ? 1 : 0,
+        postData.quality || 1
     ];
 
     const [result] = await pool.execute(query, params);

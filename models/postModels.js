@@ -7,11 +7,11 @@ export const getAllPosts = async () => {
             'dealer' AS type,
             logo AS logo,
             JSON_UNQUOTE(JSON_EXTRACT(photos, '$[0]')) AS image,
-            name AS title,
+            title AS title,
             description,
             services_starting_from AS price,
             NULL AS salary
-        FROM dealer_post
+        FROM dealer
 
         UNION ALL
 
@@ -49,11 +49,11 @@ export const getPostsByUserId = async (userId) => {
     const [rows] = await pool.execute(`
         SELECT
             id AS id,
-            'Studios' AS type,
+            'Studios' COLLATE utf8mb4_unicode_ci AS type,
             NULL AS logo,
-            JSON_UNQUOTE(JSON_EXTRACT(photos, '$[0]')) AS image,
-            title,
-            description,
+            JSON_UNQUOTE(JSON_EXTRACT(photos, '$[0]')) COLLATE utf8mb4_unicode_ci AS image,
+            title COLLATE utf8mb4_unicode_ci AS title,
+            description COLLATE utf8mb4_unicode_ci AS description,
             price,
             NULL AS salary
         FROM studio
@@ -63,11 +63,11 @@ export const getPostsByUserId = async (userId) => {
 
         SELECT
             id AS id,
-            'Equipments & Machinery' AS type,
+            'Equipments & Machinery' COLLATE utf8mb4_unicode_ci AS type,
             NULL AS logo,
-            JSON_UNQUOTE(JSON_EXTRACT(photos, '$[0]')) AS image,
-            title,
-            description,
+            JSON_UNQUOTE(JSON_EXTRACT(photos, '$[0]')) COLLATE utf8mb4_unicode_ci AS image,
+            title COLLATE utf8mb4_unicode_ci AS title,
+            description COLLATE utf8mb4_unicode_ci AS description,
             price,
             NULL AS salary
         FROM equipment_post
@@ -77,17 +77,18 @@ export const getPostsByUserId = async (userId) => {
 
         SELECT
             id AS id,
-            'jobs' AS type,
-            logo AS logo,
-            logo AS image,
-            title,
-            description,
+            'Jobs' COLLATE utf8mb4_unicode_ci AS type,
+            logo COLLATE utf8mb4_unicode_ci AS logo,
+            logo COLLATE utf8mb4_unicode_ci AS image,
+            title COLLATE utf8mb4_unicode_ci AS title,
+            description COLLATE utf8mb4_unicode_ci AS description,
             NULL AS price,
             salary
         FROM job_post
         WHERE user_id = ?
 
-        ORDER BY id DESC
+        ORDER BY id DESC;
+
     `, [userId, userId, userId]);
 
     return rows;
@@ -105,7 +106,7 @@ export const getPostsByCategoryId = async (categoryId) => {
     const [rows] = await pool.query(
         `SELECT p.*, u.name AS user_name, sc.name AS subcategory_name, c.name AS category_name
          FROM posts p
-                  JOIN user u ON p.user_id = u.user_id
+                  JOIN user u ON p.user_id = u.id
                   JOIN subcategories sc ON p.subcategory_id = sc.id
                   JOIN categories c ON p.category_id = c.id
          WHERE p.category_id = ?`,
@@ -122,7 +123,7 @@ export const getPostsBySubcategoryId = async (subcategoryId) => {
                 COALESCE(AVG(r.rating), 0) AS avg_rating,
                 COUNT(r.id) AS total_reviews
          FROM posts p
-                  JOIN user u ON p.user_id = u.user_id
+                  JOIN user u ON p.user_id = u.id
                   LEFT JOIN reviews r ON p.id = r.id
          WHERE p.subcategory_id = ?
          GROUP BY p.id

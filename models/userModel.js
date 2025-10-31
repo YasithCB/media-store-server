@@ -3,12 +3,20 @@ import {pool} from "../db.js";
 export const UserModel = {
     async create(user) {
         const { name, email, password, phone, profile_picture } = user;
+
+        // Generate a unique user ID based on timestamp + random number
+        const timestamp = Date.now(); // current timestamp in ms
+        const randomStr = Math.floor(Math.random() * 1e6); // random 6-digit number
+        const id = `user_${timestamp}${randomStr}`;
+
         const [result] = await pool.execute(
-            `INSERT INTO user (name, email, password, phone, profile_picture) VALUES (?, ?, ?, ?, ?)`,
-            [name, email, password, phone, profile_picture]
+            `INSERT INTO user (id, name, email, password, phone, profile_picture) VALUES (?, ?, ?, ?, ?, ?)`,
+            [id, name, email, password, phone, profile_picture]
         );
-        return { id: result.insertId, ...user };
+
+        return { id, ...user };
     },
+
 
     async findByEmail(email) {
         const [rows] = await pool.execute(

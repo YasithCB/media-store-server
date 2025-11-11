@@ -1,4 +1,5 @@
 import {pool} from "../db.js";
+import bcrypt from "bcrypt";
 
 export const UserModel = {
     async create(user) {
@@ -17,10 +18,16 @@ export const UserModel = {
         return { id, ...user };
     },
 
-
-    async findByEmail(email) {
+    async findByEmailUser(email) {
         const [rows] = await pool.execute(
             `SELECT * FROM user WHERE email = ?`,
+            [email]
+        );
+        return rows[0];
+    },
+    async findByEmailDealer(email) {
+        const [rows] = await pool.execute(
+            `SELECT * FROM dealer WHERE email = ?`,
             [email]
         );
         return rows[0];
@@ -48,46 +55,63 @@ export const UserModel = {
         return result.affectedRows;
     },
 
-    // reset password related
-    async saveResetOTP(userId, otp) {
-        const expires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+    // PW RESET -----------------------------------------------
+
+    // Save reset code and expiry time
+    async saveResetCode(email, code, role) {
+        const tables = {
+            user: "user",
+            dealer: "dealer",
+        };
+
+        const table = tables[role];
+        if (!table) throw new Error("Invalid role");
+
         await pool.execute(
-            "UPDATE user SET reset_otp = ?, otp_expires_at = ? WHERE id = ?",
-            [otp, expires, userId]
+            `UPDATE ${table} 
+             SET reset_code = ?, reset_expires = DATE_ADD(NOW(), INTERVAL 15 MINUTE) 
+             WHERE email = ?`,
+            [code, email]
         );
     },
 
+    // Verify if reset code is valid
+    async verifyResetCode(email, code, role) {
+        const tables = {
+            user: "user",
+            dealer: "dealer",
+        };
 
-    async verifyResetOTP(userId, otp) {
+        const table = tables[role];
+        if (!table) throw new Error("Invalid role");
+
         const [rows] = await pool.execute(
-            "SELECT * FROM user WHERE id = ? AND reset_otp = ? AND otp_expires_at > NOW()",
-            [userId, otp]
+            `SELECT * FROM ${table} WHERE email = ? AND reset_code = ? AND reset_expires > NOW()`,
+            [email, code]
         );
-        console.log(rows)
-        return rows.length > 0;
+
+        return rows[0] || null;
     },
 
-    async saveResetToken(userId, token) {
+
+    // Update password after verifying code
+    async updatePassword(email, newPassword, role) {
+        const tables = {
+            user: "user",
+            dealer: "dealer",
+        };
+
+        const table = tables[role];
+        if (!table) throw new Error("Invalid role");
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
         await pool.execute(
-            "UPDATE user SET reset_token = ?, reset_otp = NULL, otp_expires_at = NULL WHERE id = ?",
-            [token, userId]
-        );
+            `UPDATE ${table} 
+               SET password = ?, reset_code = NULL, reset_expires = NULL 
+               WHERE email = ?`,
+                    [hashedPassword, email]
+                );
     },
-
-    async findByResetToken(token) {
-        const [rows] = await pool.execute(
-            "SELECT * FROM user WHERE reset_token = ?",
-            [token]
-        );
-        return rows[0];
-    },
-
-    async updatePassword(userId, hashedPassword) {
-        await pool.execute(
-            "UPDATE user SET password = ?, reset_token = NULL WHERE id = ?",
-            [hashedPassword, userId]
-        );
-    }
 
 
 };

@@ -23,7 +23,7 @@ const storage = multer.diskStorage({
 // File Filter
 // ------------------------
 const fileFilter = (req, file, cb) => {
-    const allowedExtensions = [".jpeg", ".png", ".jpg", ".webp", ".heic"];
+    const allowedExtensions = [".jpeg", ".png", ".jpg", ".webp", ".heic", ".svg"];
     const ext = path.extname(file.originalname).toLowerCase();
 
     if (allowedExtensions.includes(ext)) {
@@ -74,10 +74,7 @@ router.get("/subcategory/:subcategoryId", DealerPostController.getDealerPostsByS
 // Update dealer post
 router.put(
     "/:id",
-    upload.fields([
-        { name: "logo", maxCount: 1 },
-        { name: "photos", maxCount: 10 },
-    ]),
+    upload.single("logo"), // only handle 'logo'
     DealerPostController.updateDealerPost
 );
 

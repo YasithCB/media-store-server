@@ -7,13 +7,12 @@ const router = express.Router();
 
 router.post("/register", upload.single("profile_picture"), AuthController.register);
 
-router.post("/login", AuthController.login);
+router.post("/login/:role", AuthController.login);
 router.get("/profile", authenticate, AuthController.getProfile);
 router.put("/profile", upload.single("profile_picture"), AuthController.updateProfile);
 
 // reset password
-router.post("/forgot-password", AuthController.forgotPassword);
-router.post("/verify-otp", AuthController.verifyOtp);
-router.post("/reset-password", AuthController.resetPassword);
+router.post("/forgot-password/:role", AuthController.sendResetCode);
+router.post("/reset-password/:role", AuthController.resetPassword);
 
 export default router;

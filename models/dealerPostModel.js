@@ -1,5 +1,6 @@
 import {pool} from "../db.js";
 import { v4 as uuidv4 } from "uuid";
+import bcrypt from "bcrypt";
 
 export const DealerPostModel = {
     // Get all dealer posts
@@ -148,14 +149,26 @@ export const DealerPostModel = {
 
     // Update dealer post
     async update(id, data) {
-        const fields = Object.keys(data)
-            .map((key) => `${key} = ?`)
-            .join(", ");
+        const updates = [];
+        const values = [];
 
-        const values = Object.values(data);
+        for (const [key, value] of Object.entries(data)) {
+            // Skip password and created_at
+            if (key === "password" || key === "created_at" || key === "updated_at") continue;
 
+            // Skip undefined/null values
+            if (value === undefined || value === null) continue;
+
+            // Add to update
+            updates.push(`${key} = ?`);
+            values.push(value);
+        }
+
+        if (updates.length === 0) return 0; // nothing to update
+
+        // updated_at will be set automatically by MySQL
         const [result] = await pool.execute(
-            `UPDATE dealer SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
+            `UPDATE dealer SET ${updates.join(", ")}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
             [...values, id]
         );
 

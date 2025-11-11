@@ -1,9 +1,9 @@
 import bcrypt from "bcrypt";
-import crypto from "crypto";
 import jwt from "jsonwebtoken";
 import { UserModel } from "../models/userModel.js";
 import {error, success} from "../helpers/response.js";
-import {sendEmail} from "../utils/email.js";
+import nodemailer from "nodemailer";
+import {capitalizeFirstLetter} from "../utils/util.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "secretkey";
 const JWT_EXPIRES = "7d";
@@ -14,7 +14,7 @@ export const register = async (req, res) => {
         const { name, email, password, phone } = req.body;
 
         // check existing user
-        const existingUser = await UserModel.findByEmail(email);
+        const existingUser = await UserModel.findByEmailUser(email);
         if (existingUser) return error(res, "Email already registered", 400);
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -45,21 +45,26 @@ export const register = async (req, res) => {
 
 // Login
 export const login = async (req, res) => {
+    const role = req.params.role;
+
     try {
         const { email, password } = req.body;
-        const user = await UserModel.findByEmail(email);
-        console.log('' +
-            'login user',user )
-        if (!user) return error(res, "Invalid email or password", 401);
+
+        let user;
+
+        if (role === 'user'){
+            user = await UserModel.findByEmailUser(email);
+        }else if (role === 'dealer'){
+            user = await UserModel.findByEmailDealer(email);
+        }
+
+        if (!user) return error(res, `${capitalizeFirstLetter(role)} Not Found!`, 401);
 
         const hash = await bcrypt.hash(password, 10);
         console.log(hash);
 
-        console.log('Input password:', password);
-        console.log('Stored hash:', user.password);
         const isMatch = await bcrypt.compare(password, user.password);
-        console.log('Password match?', isMatch);
-        if (!isMatch) return error(res, "Invalid email or password", 401);
+        if (!isMatch) return error(res, "Invalid password", 401);
 
         const token = jwt.sign({ user_id: user.user_id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
         return success(res, { token, user }, "Login successful");
@@ -108,64 +113,112 @@ export const updateProfile = async (req, res) => {
     }
 };
 
+// RESET / FORGOT PASSWORD ----------------------------------------------------
 
-export const forgotPassword = async (req, res) => {
+// Generate 6-digit OTP
+const generateCode = () => Math.floor(100000 + Math.random() * 900000).toString();
+
+// Step 1: Send reset code
+export const sendResetCode = async (req, res) => {
+    const role = req.params.role;
+    const { email } = req.body;
+
     try {
-        const { email } = req.body;
-        const user = await UserModel.findByEmail(email);
-        if (!user) return error(res, "User not found", 404);
+        let user;
+        if (role === "user") {
+            user = await UserModel.findByEmailUser(email);
+        }else if (role === "dealer") {
+            user = await UserModel.findByEmailDealer(email);
+        }
 
-        const otp = Math.floor(100000 + Math.random() * 900000).toString(); // 6-digit OTP
-        await UserModel.saveResetOTP(user.user_id, otp);
+        if (!user) return res.status(404).json({ message: `${capitalizeFirstLetter(role)} not found` });
 
-        const html = `<p>Your password reset OTP is: <b>${otp}</b></p><p>This OTP is valid for 5 minutes.</p>`;
-        const sent = await sendEmail(email, "Password Reset OTP", html);
+        const code = generateCode();
+        await UserModel.saveResetCode(email, code, role);
 
-        if (!sent) return error(res, "Failed to send OTP", 500);
+        // send mail
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: { user: process.env.EMAILJS_MY_EMAIL, pass: process.env.EMAILJS_MY_EMAIL_PW },
+        });
 
-        return success(res, { otpSent: true }, "OTP sent to your email");
+        await transporter.sendMail({
+            from: `"Support Team" <${process.env.EMAILJS_MY_EMAIL}>`,
+            to: email,
+            subject: "🔐 Reset Your Password – Code Inside",
+            html: `
+            <div style="font-family: 'Segoe UI', Roboto, Arial, sans-serif; background-color: #f7f8fa; padding: 40px 0;">
+              <div style="max-width: 520px; margin: auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.05);">
+                
+                <!-- Header -->
+                <div style="background-color: #FFD700; padding: 24px; text-align: center;">
+                  <h1 style="color: #000000; font-size: 24px; margin: 0;">Password Reset Request</h1>
+                </div>
+        
+                <!-- Body -->
+                <div style="padding: 32px; color: #333333;">
+                  <p style="font-size: 16px; line-height: 1.5; margin-bottom: 20px;">Hello,</p>
+                  <p style="font-size: 15px; line-height: 1.6; color: #555;">
+                    We received a request to reset your password. Use the following verification code to continue:
+                  </p>
+        
+                  <!-- Code -->
+                  <div style="text-align: center; margin: 30px 0;">
+                    <div style="display: inline-block; background-color: #f4f5f7; color: #111; font-size: 28px; font-weight: 700; letter-spacing: 6px; padding: 18px 28px; border-radius: 8px; border: 1px solid #ddd;">
+                      ${code}
+                    </div>
+                  </div>
+        
+                  <p style="font-size: 15px; line-height: 1.6; color: #555;">
+                    This code will expire in <strong>15 minutes</strong>. If you did not request a password reset, please ignore this email — your account is safe.
+                  </p>
+        
+                  <!-- Button -->
+                  <div style="margin-top: 30px; text-align: center;">
+                    <a href="#" style="display: inline-block; background-color: #FFD700; color: #000; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600;">
+                      Reset Password
+                    </a>
+                  </div>
+                </div>
+        
+                <!-- Footer -->
+                <div style="background-color: #f4f5f7; padding: 16px; text-align: center; font-size: 13px; color: #777;">
+                  <p style="margin: 0;">
+                    If you have any questions, contact us at 
+                    <a href="mailto:${process.env.EMAILJS_MY_EMAIL}" style="color: #111; text-decoration: none;">
+                      ${process.env.EMAILJS_MY_EMAIL}
+                    </a>.
+                  </p>
+                  <p style="margin-top: 4px;">&copy; ${new Date().getFullYear()} The Meat Shop. All rights reserved.</p>
+                </div>
+        
+              </div>
+            </div>
+          `,
+        });
+
+
+
+        res.json({ message: "Reset code sent successfully" });
     } catch (err) {
-        return error(res, err.message);
+        res.status(500).json({ message: err.message });
     }
 };
 
-export const verifyOtp = async (req, res) => {
-    try {
-        const { email, otp } = req.body;
-        console.log(email)
-        console.log(otp)
-
-        const user = await UserModel.findByEmail(email);
-        if (!user) return error(res, "User not found", 404);
-
-        const valid = await UserModel.verifyResetOTP(user.user_id, otp);
-        if (!valid) return error(res, "Invalid or expired OTP", 400);
-
-        // Generate a reset token (temporary)
-        const resetToken = Math.random().toString(36).substring(2, 12);
-        await UserModel.saveResetToken(user.user_id, resetToken);
-
-        return success(res, { resetToken }, "OTP verified");
-    } catch (err) {
-        return error(res, err.message);
-    }
-};
-
+// Step 2: Reset password
 export const resetPassword = async (req, res) => {
-    console.log(req.body)
+    const role = req.params.role;
+    const { email, code, newPassword } = req.body;
+
     try {
-        const { token, newPassword } = req.body;
+        const validUser = await UserModel.verifyResetCode(email, code, role);
+        if (!validUser)
+            return res.status(400).json({ message: "Invalid or expired code" });
 
-        const user = await UserModel.findByResetToken(token);
-        if (!user) return error(res, "Invalid or expired reset token", 400);
-
-        const hashed = await bcrypt.hash(newPassword, 10);
-        await UserModel.updatePassword(user.user_id, hashed);
-
-        return success(res, null, "Password reset successful");
+        await UserModel.updatePassword(email, newPassword, role);
+        res.json({ message: "Password updated successfully" });
     } catch (err) {
-        return error(res, err.message);
+        res.status(500).json({ message: err.message });
     }
 };
-
 

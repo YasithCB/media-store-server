@@ -150,13 +150,25 @@ export const createDealerPost = async (req, res) => {
 // Update dealer post
 export const updateDealerPost = async (req, res) => {
     try {
-        const affected = await DealerPostModel.update(req.params.id, req.body);
+        const dataToUpdate = { ...req.body }; // copy body fields
+
+        // If a logo file was uploaded, save its path
+        if (req.file) {
+            // Use forward slashes for consistency
+            dataToUpdate.logo = req.file.path.replace(/\\/g, "/");
+        }
+
+        const affected = await DealerPostModel.update(req.params.id, dataToUpdate);
+
         if (!affected) return error(res, "Dealer post not found", 404);
+
         return success(res, null, "Dealer post updated successfully");
     } catch (err) {
+        console.error(err);
         return error(res, err.message);
     }
 };
+
 
 // Delete dealer post
 export const deleteDealerPost = async (req, res) => {

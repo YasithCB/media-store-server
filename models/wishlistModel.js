@@ -68,17 +68,14 @@ export const getWishlistByUser = async (userId) => {
  */
 export const addToWishlist = async (userId, postId, postCategory) => {
     try {
-        // Validate category (important to prevent SQL injection)
-        const tableName = categoryMap[postCategory];
-        if (!tableName) throw new Error("Invalid category title");
+        // Optional: validate category
+        if (!categoryMap[postCategory]) throw new Error("Invalid category");
 
-        // Use INSERT IGNORE to prevent duplicates (unique constraint)
         const [result] = await pool.execute(
             `INSERT IGNORE INTO wishlist (user_id, post_id, post_category) VALUES (?, ?, ?)`,
             [userId, postId, postCategory]
         );
 
-        // result.affectedRows === 1 if new row added, 0 if already existed
         return result.affectedRows === 1
             ? { user_id: userId, post_id: postId, post_category: postCategory }
             : null;

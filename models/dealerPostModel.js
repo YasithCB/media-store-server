@@ -1,15 +1,12 @@
 import {pool} from "../db.js";
 import { v4 as uuidv4 } from "uuid";
-import bcrypt from "bcrypt";
 
 export const DealerPostModel = {
     // Get all dealer posts
     async getAll() {
         const [rows] = await pool.execute(
-            `SELECT dp.*, c.name AS category_name, sc.name AS subcategory_name
+            `SELECT dp.*
              FROM dealer dp
-             JOIN categories c ON dp.category_id = c.id
-             JOIN subcategories sc ON dp.subcategory_id = sc.id
              ORDER BY dp.created_at DESC`
         );
         return rows;
@@ -63,17 +60,15 @@ export const DealerPostModel = {
 
 
     async create(data) {
-        console.log("=== DealerPostModel.create data ===", data);
-
         const {
             name,
             logo,
             photos,
             description,
             category_id,
-            category_title,        // ✅ new
+            category_title,
             subcategory_id,
-            subcategory_title,     // ✅ new
+            subcategory_title,
             email,
             password,
             phone,
@@ -99,7 +94,8 @@ export const DealerPostModel = {
         // Generate dealer_id (20 chars)
         const dealer_id = uuidv4().replace(/-/g, "").substring(0, 20);
 
-        console.log("=== Generated dealer_id ===", dealer_id);
+        const parsedServices = services ? JSON.parse(services) : null;
+        const parsedTags = tags ? JSON.parse(tags) : null;
 
         const [result] = await pool.execute(
             `INSERT INTO dealer
@@ -124,25 +120,23 @@ export const DealerPostModel = {
                 phone || null,
                 whatsapp || null,
                 website_url || null,
-                social_links || null,
+                social_links ? JSON.parse(social_links) : null,
                 address_line1 || null,
                 address_line2 || null,
                 city || null,
                 country || null,
-                location_map || null,
-                services || null,
-                services_starting_from || null,
-                working_hours || null,
+                location_map ? JSON.parse(location_map) : null,
+                parsedServices,
+                services_starting_from ?? null,
+                working_hours ? JSON.parse(working_hours) : null,
                 rating ?? 0,
                 reviews_count ?? 0,
                 verified ?? 0,
                 established_year || null,
                 featured ?? 0,
-                tags || null
+                parsedTags
             ]
         );
-
-        console.log("=== Dealer post created result ===", result);
 
         return { dealer_id, insertedId: result.insertId, ...data };
     },

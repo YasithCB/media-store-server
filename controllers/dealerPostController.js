@@ -1,6 +1,7 @@
 import { DealerPostModel } from "../models/dealerPostModel.js";
 import {error, success} from "../helpers/response.js";
 import * as EquipmentPostModel from "../models/equipmentPostModel.js";
+import bcrypt from "bcrypt";
 
 // Get all dealer posts
 export const getAllDealerPosts = async (req, res) => {
@@ -53,12 +54,6 @@ export const getDealerPostsBySubcategoryId = async (req, res) => {
 
 // Create new dealer post
 export const createDealerPost = async (req, res) => {
-    console.log("=== Request Body ===");
-    console.log(req.body);
-
-    console.log("=== Uploaded Files ===");
-    console.log(req.files);
-
     try {
         // Handle logo
         const logoPath = req.files?.logo
@@ -70,11 +65,13 @@ export const createDealerPost = async (req, res) => {
             ? req.files.photos.map(file => "/" + file.path.replace(/\\/g, "/"))
             : [];
 
+        const hashedPassword = await bcrypt.hash(req.body.password, 10);
+
         // Prepare post data
         const postData = {
             dealer_id: req.body.dealer_id ?? null,
             name: req.body.name ?? null,
-            password: req.body.password ?? null,
+            password: hashedPassword,
             logo: logoPath ?? null,
             photos: photosPaths.length ? JSON.stringify(photosPaths) : null,
             description: req.body.description ?? null,

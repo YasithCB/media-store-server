@@ -23,7 +23,15 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.use(cors());
+app.use(cors({
+    origin: [
+        "media-store-web-ecommerce.vercel.app", // replace with your actual frontend domain
+        "http://localhost:5173" // optional: for local testing
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+}));
+
 
 // Serve uploads
 app.use("/uploads", express.static("uploads"));

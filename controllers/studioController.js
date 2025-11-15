@@ -12,6 +12,28 @@ export const getAllStudios = async (req, res) => {
     }
 };
 
+export const getStudioBySubcategoryId = async (req, res) => {
+    try {
+        const { subcategoryId } = req.params;
+        const posts = await StudioModel.getBySubcategoryId(subcategoryId);
+        return success(res, posts, "Studios by subcategory fetched successfully");
+    } catch (err) {
+        return error(res, err.message);
+    }
+};
+
+// Get single equipment post
+export const getStudioById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const post = await StudioModel.getById(id);
+        if (!post) return error(res, "Studio Post not found", 404);
+        return success(res, post, "Studio post fetched successfully");
+    } catch (err) {
+        return error(res, err.message);
+    }
+};
+
 // Create new studio post
 export const createStudio = async (req, res) => {
     try {

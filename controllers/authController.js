@@ -86,32 +86,25 @@ export const getProfile = async (req, res) => {
 
 // Update profile
 export const updateProfile = async (req, res) => {
+    const { id } = req.params;
+
     try {
-        const userId = req.body.user_id;
-        if (!userId) return error(res, "User ID missing", 400);
+        const { name, email, phone, password } = req.body;
 
-        let updateData = { ...req.body };
+        let updateData = { name, email, phone };
 
-        if (req.file) {
-            // Convert Windows "\" to "/" and ensure it starts with "/"
-            let filePath = req.file.path.replace(/\\/g, "/");
-            if (!filePath.startsWith("/")) {
-                filePath = "/" + filePath;
-            }
-            updateData.profile_picture = filePath;
-        }
-
-        const affected = await UserModel.update(userId, updateData);
+        const affected = await UserModel.update(id, updateData);
         if (!affected) return error(res, "Profile update failed", 400);
 
         // Fetch updated user
-        const updatedUser = await UserModel.findById(userId);
+        const updatedUser = await UserModel.findById(id);
 
         return success(res, updatedUser, "Profile updated successfully");
     } catch (err) {
         return error(res, err.message);
     }
 };
+
 
 // RESET / FORGOT PASSWORD ----------------------------------------------------
 
@@ -221,4 +214,67 @@ export const resetPassword = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
+
+// REGISTRATION DATA VERIFICATION
+
+// ==========================
+// SEND OTP
+// ==========================
+export async function sendOtp(req, res) {
+    try {
+        const { email } = req.body;
+        if (!email) return res.status(400).json({ message: "Email is required" });
+
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const expires = Date.now() + 5 * 60 * 1000; // 5 min
+
+        user.otp = otp;
+        user.otp_expires_at = expires;
+        await user.save();
+
+        // OPTIONAL: send actual email
+        // await sendEmail(email, `Your OTP is ${otp}`);
+
+        return res.json({ message: "OTP sent successfully", otp }); // remove otp in production
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+// ==========================
+// VERIFY OTP
+// ==========================
+export async function verifyOtp(req, res) {
+    try {
+        const { email, otp } = req.body;
+
+        if (!email || !otp)
+            return res.status(400).json({ message: "Email and OTP are required" });
+
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        if (!user.otp || !user.otp_expires_at)
+            return res.status(400).json({ message: "OTP not generated" });
+
+        if (user.otp_expires_at < Date.now())
+            return res.status(400).json({ message: "OTP expired" });
+
+        if (user.otp !== otp)
+            return res.status(400).json({ message: "Invalid OTP" });
+
+        // clear OTP after success
+        user.otp = null;
+        user.otp_expires_at = null;
+        await user.save();
+
+        return res.json({ message: "OTP verified successfully" });
+    } catch (error) {
+        return res.status(500).json({ message: error.message });
+    }
+}
+
 

@@ -11,6 +11,26 @@ export const getAllStudios = async () => {
     return rows;
 };
 
+export const getBySubcategoryId = async (subcategoryId) => {
+    const [rows] = await pool.execute(`
+        SELECT *
+        FROM studio 
+        WHERE subcategory_id = ?
+        ORDER BY created_at DESC
+    `, [subcategoryId]);
+    return rows;
+};
+
+export const getById = async (postId) => {
+    const [rows] = await pool.execute(
+        `SELECT *
+         FROM studio
+         WHERE id = ?`,
+        [postId]
+    );
+    return rows[0];
+};
+
 export const createStudio = async (studioData) => {
     const customId = `stu_${Date.now()}${Math.floor(Math.random() * 1000)}`;
 

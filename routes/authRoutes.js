@@ -9,10 +9,15 @@ router.post("/register", upload.single("profile_picture"), AuthController.regist
 
 router.post("/login/:role", AuthController.login);
 router.get("/profile", authenticate, AuthController.getProfile);
-router.put("/profile", upload.single("profile_picture"), AuthController.updateProfile);
+router.put("/:id", upload.single("profile_picture"), AuthController.updateProfile);
 
 // reset password
 router.post("/forgot-password/:role", AuthController.sendResetCode);
 router.post("/reset-password/:role", AuthController.resetPassword);
+
+// REGISTER VERIFICATION
+router.post("/send-otp", AuthController.sendOtp);
+router.post("/verify-otp", AuthController.verifyOtp);
+
 
 export default router;

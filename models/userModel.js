@@ -43,6 +43,9 @@ export const UserModel = {
     },
 
     async update(user_id, data) {
+        if (!data || Object.keys(data).length === 0) return 0; // nothing to update
+
+        // Build query dynamically
         const fields = Object.keys(data)
             .map((key) => `${key} = ?`)
             .join(", ");
@@ -52,8 +55,10 @@ export const UserModel = {
             `UPDATE user SET ${fields}, updated_at = CURRENT_TIMESTAMP WHERE id = ?`,
             [...values, user_id]
         );
+
         return result.affectedRows;
     },
+
 
     // PW RESET -----------------------------------------------
 

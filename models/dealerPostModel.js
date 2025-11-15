@@ -1,5 +1,4 @@
 import {pool} from "../db.js";
-import { v4 as uuidv4 } from "uuid";
 
 export const DealerPostModel = {
     // Get all dealer posts
@@ -58,7 +57,6 @@ export const DealerPostModel = {
         return rows;
     },
 
-
     async create(data) {
         const {
             name,
@@ -92,7 +90,7 @@ export const DealerPostModel = {
         } = data;
 
         // Generate dealer_id (20 chars)
-        const dealer_id = uuidv4().replace(/-/g, "").substring(0, 20);
+        const dealer_id = `dealer_${Date.now()}`;
 
         const parsedServices = services ? JSON.parse(services) : null;
         const parsedTags = tags ? JSON.parse(tags) : null;

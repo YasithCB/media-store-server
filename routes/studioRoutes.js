@@ -3,6 +3,7 @@ import * as StudioController from "../controllers/studioController.js";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import * as EquipmentPostController from "../controllers/equipmentPostController.js";
 
 const router = express.Router();
 
@@ -37,7 +38,8 @@ router.put(
     StudioController.updateStudio // make sure you implement this in your controller
 );
 
-router.get("/", StudioController
-    .getAllStudios);
+router.get("/", StudioController.getAllStudios);
+router.get("/subcategory/:subcategoryId", StudioController.getStudioBySubcategoryId);
+router.get("/:id", StudioController.getStudioById);
 
 export default router;

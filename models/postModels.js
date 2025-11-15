@@ -5,6 +5,8 @@ export const getAllPosts = async () => {
         SELECT
             id AS id,
             'dealer' AS type,
+            category_title,
+            category_id,
             logo AS logo,
             JSON_UNQUOTE(JSON_EXTRACT(photos, '$[0]')) AS image,
             title AS title,
@@ -18,6 +20,8 @@ export const getAllPosts = async () => {
         SELECT
             id AS id,
             'equipment' AS type,
+            category_title,
+            category_id,
             NULL AS logo,
             JSON_UNQUOTE(JSON_EXTRACT(photos, '$[0]')) AS image,
             title,
@@ -31,6 +35,8 @@ export const getAllPosts = async () => {
         SELECT
             id AS id,
             'job' AS type,
+            category_title,
+            category_id,
             logo AS logo,
             NULL AS image,
             title,

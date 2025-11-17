@@ -1,9 +1,10 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { UserModel } from "../models/userModel.js";
+import {UserModel as dealerModel, UserModel} from "../models/userModel.js";
 import {error, success} from "../helpers/response.js";
 import nodemailer from "nodemailer";
 import {capitalizeFirstLetter} from "../utils/util.js";
+import {RegistrationOtpModel} from "../models/registrationOtpModel.js";
 
 const JWT_SECRET = process.env.JWT_SECRET || "secretkey";
 const JWT_EXPIRES = "7d";
@@ -134,7 +135,6 @@ export const sendResetCode = async (req, res) => {
             service: "gmail",
             auth: { user: process.env.EMAILJS_MY_EMAIL, pass: process.env.EMAILJS_MY_EMAIL_PW },
         });
-
         await transporter.sendMail({
             from: `"Support Team" <${process.env.EMAILJS_MY_EMAIL}>`,
             to: email,
@@ -182,15 +182,13 @@ export const sendResetCode = async (req, res) => {
                       ${process.env.EMAILJS_MY_EMAIL}
                     </a>.
                   </p>
-                  <p style="margin-top: 4px;">&copy; ${new Date().getFullYear()} The Meat Shop. All rights reserved.</p>
+                  <p style="margin-top: 4px;">&copy; ${new Date().getFullYear()} Media Store. All rights reserved.</p>
                 </div>
         
               </div>
             </div>
           `,
         });
-
-
 
         res.json({ message: "Reset code sent successfully" });
     } catch (err) {
@@ -223,58 +221,161 @@ export const resetPassword = async (req, res) => {
 // ==========================
 export async function sendOtp(req, res) {
     try {
-        const { email } = req.body;
-        if (!email) return res.status(400).json({ message: "Email is required" });
+        const role = req.params.role;
+        const { email, phone } = req.body;
 
-        const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ message: "User not found" });
+        // check existing user
+        let existingUser;
+        if (role === 'user'){
+            existingUser = await UserModel.findByEmailUser(email);
+        }else if (role === 'dealer'){
+            existingUser = await dealerModel.findByEmailDealer(email);
+        }
 
-        const otp = Math.floor(100000 + Math.random() * 900000).toString();
-        const expires = Date.now() + 5 * 60 * 1000; // 5 min
+        if (existingUser) return error(res, "Email Already Registered", 400);
 
-        user.otp = otp;
-        user.otp_expires_at = expires;
-        await user.save();
+        const emailOtp = Math.floor(100000 + Math.random() * 900000).toString();
+        const mobileOtp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // OPTIONAL: send actual email
-        // await sendEmail(email, `Your OTP is ${otp}`);
+        const expires = Date.now() + 5 * 60 * 1000;
 
-        return res.json({ message: "OTP sent successfully", otp }); // remove otp in production
+        // delete previous OTPs for this email
+        await RegistrationOtpModel.deleteByEmail(email);
+
+        console.log(email, emailOtp, mobileOtp, expires);
+
+        // save new OTPs
+        await RegistrationOtpModel.saveOtps({
+            email,
+            email_otp: emailOtp,
+            email_otp_expires: expires,
+            mobile_otp: mobileOtp,
+            mobile_otp_expires: expires
+        });
+
+        // send mail
+        const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: { user: process.env.EMAILJS_MY_EMAIL, pass: process.env.EMAILJS_MY_EMAIL_PW },
+        });
+        await transporter.sendMail({
+            from: `"Support Team" <${process.env.EMAILJS_MY_EMAIL}>`,
+            to: email,
+            subject: "🔐 Verify Your Email – Registration Code",
+            html: `
+    <div style="font-family: 'Segoe UI', Roboto, Arial, sans-serif; background-color: #f7f8fa; padding: 40px 0;">
+      <div style="max-width: 520px; margin: auto; background: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.05);">
+        
+        <!-- Header -->
+        <div style="background-color: #FFD700; padding: 24px; text-align: center;">
+          <h1 style="color: #000000; font-size: 24px; margin: 0;">Email Verification</h1>
+        </div>
+
+        <!-- Body -->
+        <div style="padding: 32px; color: #333333;">
+          <p style="font-size: 16px; line-height: 1.5; margin-bottom: 20px;">Hello,</p>
+          <p style="font-size: 15px; line-height: 1.6; color: #555;">
+            Thank you for registering with us! To complete your signup, please enter the verification code below:
+          </p>
+
+          <!-- Code -->
+          <div style="text-align: center; margin: 30px 0;">
+            <div style="display: inline-block; background-color: #f4f5f7; color: #111; font-size: 28px; font-weight: 700; letter-spacing: 6px; padding: 18px 28px; border-radius: 8px; border: 1px solid #ddd;">
+              ${emailOtp}
+            </div>
+          </div>
+
+          <p style="font-size: 15px; line-height: 1.6; color: #555;">
+            This verification code will expire in <strong>15 minutes</strong>.
+            If you did not initiate this registration, you may safely ignore this email.
+          </p>
+
+          <!-- Button -->
+          <div style="margin-top: 30px; text-align: center;">
+            <a href="#" style="display: inline-block; background-color: #FFD700; color: #000; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600;">
+              Verify Email
+            </a>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="background-color: #f4f5f7; padding: 16px; text-align: center; font-size: 13px; color: #777;">
+          <p style="margin: 0;">
+            Need help? Contact us at 
+            <a href="mailto:${process.env.EMAILJS_MY_EMAIL}" style="color: #111; text-decoration: none;">
+              ${process.env.EMAILJS_MY_EMAIL}
+            </a>.
+          </p>
+          <p style="margin-top: 4px;">&copy; ${new Date().getFullYear()} Media Store. All rights reserved.</p>
+        </div>
+
+      </div>
+    </div>
+  `,
+        });
+
+
+        // TODO: integrate SMS sender
+        // send UAE SMS
+        // await sendUaeOtpSms(mobile, mobileOtp);
+
+        // If both are valid → return success
+        return success(
+            res,
+            {
+                emailVerified: emailOtp !== undefined,
+                mobileVerified: mobileOtp !== undefined
+            },
+            "OTP(s) sent successfully"
+        );
+
     } catch (error) {
-        return res.status(500).json({ message: error.message });
+        return error(res, error.message);
     }
 }
+
 // ==========================
 // VERIFY OTP
 // ==========================
 export async function verifyOtp(req, res) {
-    try {
-        const { email, otp } = req.body;
+    const { email, emailOtp, mobileOtp } = req.body;
 
-        if (!email || !otp)
-            return res.status(400).json({ message: "Email and OTP are required" });
+    const record = await RegistrationOtpModel.findByEmail(email);
+    if (!record) return res.status(400).json({ message: "OTP record not found" });
 
-        const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ message: "User not found" });
+    // Check Email OTP if provided
+    if (emailOtp !== undefined) {
+        if (record.email_otp !== emailOtp)
+            return res.status(400).json({ message: "Invalid Email OTP" });
 
-        if (!user.otp || !user.otp_expires_at)
-            return res.status(400).json({ message: "OTP not generated" });
-
-        if (user.otp_expires_at < Date.now())
-            return res.status(400).json({ message: "OTP expired" });
-
-        if (user.otp !== otp)
-            return res.status(400).json({ message: "Invalid OTP" });
-
-        // clear OTP after success
-        user.otp = null;
-        user.otp_expires_at = null;
-        await user.save();
-
-        return res.json({ message: "OTP verified successfully" });
-    } catch (error) {
-        return res.status(500).json({ message: error.message });
+        if (record.email_otp_expires < Date.now())
+            return res.status(400).json({ message: "Email OTP expired" });
+    }else {
+        return error(res, 'Something went wrong, Try again Later!');
     }
+
+    // Check Mobile OTP if provided
+    // if (mobile_otp !== undefined) {
+    //     if (record.mobile_otp !== mobile_otp)
+    //         return res.status(400).json({ message: "Invalid Mobile OTP" });
+    //
+    //     if (record.mobile_otp_expires < Date.now())
+    //         return res.status(400).json({ message: "Mobile OTP expired" });
+    // }
+
+    return success(
+        res,
+        {
+            emailVerified: emailOtp !== undefined,
+            mobileVerified: emailOtp !== undefined
+        },
+        "OTP(s) verified successfully"
+    );
+
 }
+
+
+
+
 
 

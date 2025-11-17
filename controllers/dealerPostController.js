@@ -110,6 +110,8 @@ export const createDealerPost = async (req, res) => {
             reviews_count: req.body.reviews_count ?? 0,
             verified: req.body.verified ?? 0,
             established_year: req.body.established_year ?? null,
+            license_no: req.body.license_no ?? null,
+            license_exp_date: req.body.license_exp_date ?? null,
             featured: req.body.featured ?? 0,
 
             tags: req.body.tags

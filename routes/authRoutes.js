@@ -16,7 +16,7 @@ router.post("/forgot-password/:role", AuthController.sendResetCode);
 router.post("/reset-password/:role", AuthController.resetPassword);
 
 // REGISTER VERIFICATION
-router.post("/send-otp", AuthController.sendOtp);
+router.post("/send-otp/:role", AuthController.sendOtp);
 router.post("/verify-otp", AuthController.verifyOtp);
 
 

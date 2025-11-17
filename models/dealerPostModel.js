@@ -85,6 +85,8 @@ export const DealerPostModel = {
             reviews_count,
             verified,
             established_year,
+            license_no,
+            license_exp_date,
             featured,
             tags
         } = data;
@@ -101,8 +103,8 @@ export const DealerPostModel = {
               subcategory_id, subcategory_title, email, phone, whatsapp, website_url, social_links,
               address_line1, address_line2, city, country, location_map,
               services, services_starting_from, working_hours,
-              rating, reviews_count, verified, established_year, featured, tags)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              rating, reviews_count, verified, established_year,license_no,license_exp_date, featured, tags)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?,?, ?, ?, ?)`,
             [
                 dealer_id,
                 password || null,
@@ -131,6 +133,8 @@ export const DealerPostModel = {
                 reviews_count ?? 0,
                 verified ?? 0,
                 established_year || null,
+                license_no || null,
+                license_exp_date || null,
                 featured ?? 0,
                 parsedTags
             ]

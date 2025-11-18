@@ -1,7 +1,11 @@
-import { DealerPostModel } from "../models/dealerPostModel.js";
+import {DealerPostModel as DealerPostModel} from "../models/dealerPostModel.js";
 import {error, success} from "../helpers/response.js";
-import * as EquipmentPostModel from "../models/equipmentPostModel.js";
 import bcrypt from "bcrypt";
+import {
+    getOrdersBySupplier, updateOrderStatusToDelivered,
+    updateOrderStatusToReady,
+    updateOrderStatusToShipped
+} from "../models/orderDetailsModel.js";
 
 // Get all dealer posts
 export const getAllDealerPosts = async (req, res) => {
@@ -47,6 +51,41 @@ export const getDealerPostsBySubcategoryId = async (req, res) => {
     try {
         const posts = await DealerPostModel.getBySubcategory(req.params.subcategoryId);
         return success(res, posts, "Dealer posts by subcategory fetched successfully");
+    } catch (err) {
+        return error(res, err.message);
+    }
+};
+
+// Get posts by subcategory ID
+export const getOrderDetailsBySupplier = async (req, res) => {
+    try {
+        const orders = await getOrdersBySupplier(req.params.dealerId);
+        return success(res, orders, "Dealer Orders fetched successfully");
+    } catch (err) {
+        return error(res, err.message);
+    }
+};
+
+export const markOrderAsReady = async (req, res) => {
+    try {
+        const data = await updateOrderStatusToReady(req.params.orderId);
+        return success(res, data, "Changed status to READY successfully");
+    } catch (err) {
+        return error(res, err.message);
+    }
+};
+export const markOrderAsShipped = async (req, res) => {
+    try {
+        const data = await updateOrderStatusToShipped(req.params.orderId);
+        return success(res, data, "Changed status to SHIPPED successfully");
+    } catch (err) {
+        return error(res, err.message);
+    }
+};
+export const markOrderAsDelivered = async (req, res) => {
+    try {
+        const data = await updateOrderStatusToDelivered(req.params.orderId);
+        return success(res, data, "Changed status to DELIVERED successfully");
     } catch (err) {
         return error(res, err.message);
     }

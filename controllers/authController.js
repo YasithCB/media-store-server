@@ -68,7 +68,7 @@ export const login = async (req, res) => {
         if (!isMatch) return error(res, "Invalid password", 401);
 
         const token = jwt.sign({ user_id: user.user_id }, JWT_SECRET, { expiresIn: JWT_EXPIRES });
-        return success(res, { token, user }, "Login successful");
+        return success(res, { token, user, role }, "Login successful");
     } catch (err) {
         return error(res, err.message);
     }

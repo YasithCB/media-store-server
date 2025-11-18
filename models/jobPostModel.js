@@ -67,12 +67,12 @@ export const generateJobPostId = async () => {
     const [rows] = await pool.execute(query);
 
     if (rows.length === 0) {
-        return "JP0001";
+        return "jp0001";
     }
 
     const lastId = rows[0].id; // e.g. "JP0023"
-    const numPart = parseInt(lastId.replace("JP", ""), 10) + 1;
-    return `JP${numPart.toString().padStart(4, "0")}`; // e.g. "JP0024"
+    const numPart = parseInt(lastId.replace("jp", ""), 10) + 1;
+    return `jp${numPart.toString().padStart(4, "0")}`; // e.g. "JP0024"
 };
 
 

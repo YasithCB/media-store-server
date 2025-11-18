@@ -71,6 +71,12 @@ router.get("/name/:name", DealerPostController.getDealersByName);
 // Get dealer posts by subcategory
 router.get("/subcategory/:subcategoryId", DealerPostController.getDealerPostsBySubcategoryId);
 
+// GET RECEIVED ORDERS
+router.get("/orders-received/:dealerId", DealerPostController.getOrderDetailsBySupplier);
+router.get("/orders-received/ready/:orderId", DealerPostController.markOrderAsReady);
+router.get("/orders-received/shipped/:orderId", DealerPostController.markOrderAsShipped);
+router.get("/orders-received/delivered/:orderId", DealerPostController.markOrderAsDelivered);
+
 // Update dealer post
 router.put(
     "/:id",
